@@ -163,7 +163,8 @@ namespace Payvast.API.Controllers
             var weeks = GetLastWeeks(12);
             var allTasksWithDates = await _context.Tasks
                 .Where(t => t.TaskType == "GANTT" && t.AllocatedHours > 0)
-                .Select(t => new { t.StartDate, t.AllocatedHours, t.AssigneeId, t.Assignee })
+                .Include(t => t.Assignee)
+                .AsNoTracking()
                 .ToListAsync();
 
             var weeklyWorkload = new List<WeeklyWorkloadDto>();
@@ -185,8 +186,14 @@ namespace Payvast.API.Controllers
                 weeklyWorkload.AddRange(tasksInWeek);
             }
 
-            var userWorkloadShare = await _context.Tasks
+            // SQLite In-Memory Grouping Fix
+            var allGanttTasksWithUsers = await _context.Tasks
                 .Where(t => t.TaskType == "GANTT" && t.AssigneeId.HasValue && t.AllocatedHours > 0)
+                .Include(t => t.Assignee)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var userWorkloadShare = allGanttTasksWithUsers
                 .GroupBy(t => t.AssigneeId)
                 .Select(g => new UserWorkloadShareDto
                 {
@@ -195,7 +202,7 @@ namespace Payvast.API.Controllers
                     TotalAllocatedHours = g.Sum(x => x.AllocatedHours ?? 0)
                 })
                 .OrderByDescending(x => x.TotalAllocatedHours)
-                .ToListAsync();
+                .ToList();
 
             var criticalProjects = new List<CriticalProjectDto>();
             foreach (var p in allProjects.Where(p => p.ParentProjectId == null))
@@ -281,18 +288,22 @@ namespace Payvast.API.Controllers
 
                 var tasksInWeek = await _context.Tasks
                     .Where(t => t.TaskType == "GANTT" && t.StartDate >= startDate && t.StartDate < endDate && t.AssigneeId.HasValue)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var groupedTasks = tasksInWeek
                     .GroupBy(t => t.AssigneeId)
                     .Select(g => new
                     {
                         UserId = g.Key.Value,
                         TotalEstimated = g.Sum(t => t.EstimatedHours ?? 0),
                         TotalAllocated = g.Sum(t => t.AllocatedHours ?? 0)
-                    }).ToListAsync();
+                    }).ToList();
 
                 var result = new List<WeeklyWorkloadResponseDto>();
                 foreach (var user in users)
                 {
-                    var userTasks = tasksInWeek.FirstOrDefault(t => t.UserId == user.Id);
+                    var userTasks = groupedTasks.FirstOrDefault(t => t.UserId == user.Id);
                     decimal estimated = userTasks?.TotalEstimated ?? 0;
                     decimal allocated = userTasks?.TotalAllocated ?? 0;
                     if (estimated == 0 && allocated == 0) continue;

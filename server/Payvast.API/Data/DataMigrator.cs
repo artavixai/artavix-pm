@@ -24,9 +24,12 @@ namespace Payvast.API.Data
                         return;
                     }
 
-                    // Clear existing SQLite data to ensure 100% clean copy
+                    // Reset SQLite
                     sqliteContext.Database.EnsureDeleted();
                     sqliteContext.Database.EnsureCreated();
+
+                    // Temporarily disable foreign keys for SQLite migration
+                    sqliteContext.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF;");
 
                     Console.WriteLine("[DataMigrator] SQLite database reset. Copying all tables...");
 
@@ -36,7 +39,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Roles.AddRange(roles);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {roles.Count} Roles.");
                     }
 
                     // 2. Users
@@ -45,7 +47,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Users.AddRange(users);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {users.Count} Users.");
                     }
 
                     // 3. UserRoles
@@ -54,16 +55,14 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.UserRoles.AddRange(userRoles);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {userRoles.Count} UserRoles.");
                     }
 
-                    // 4. ProductGroups, Subsystems & TaskTemplates
+                    // 4. ProductGroups, Subsystems, Templates
                     var productGroups = sqlContext.ProductGroups.Include(pg => pg.Subsystems).AsNoTracking().ToList();
                     if (productGroups.Any())
                     {
                         sqliteContext.ProductGroups.AddRange(productGroups);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {productGroups.Count} ProductGroups.");
                     }
 
                     var stepTemplates = sqlContext.ProjectStepTemplates.AsNoTracking().ToList();
@@ -101,7 +100,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Projects.AddRange(projects);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {projects.Count} Projects.");
                     }
 
                     var checklists = sqlContext.ProjectChecklists.AsNoTracking().ToList();
@@ -117,7 +115,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Tasks.AddRange(tasks);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {tasks.Count} Tasks.");
                     }
 
                     // 8. Notes
@@ -126,7 +123,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Notes.AddRange(notes);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {notes.Count} Notes.");
                     }
 
                     // 9. Chat Channels, Members, Messages, Reactions
@@ -149,7 +145,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.ChatMessages.AddRange(messages);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {messages.Count} Chat Messages.");
                     }
 
                     var reactions = sqlContext.MessageReactions.AsNoTracking().ToList();
@@ -165,7 +160,6 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Meetings.AddRange(meetings);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {meetings.Count} Meetings.");
                     }
 
                     // 11. FollowUps & Documents
@@ -189,11 +183,13 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.WeeklyPlans.AddRange(plans);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {plans.Count} Weekly Plans.");
                     }
 
+                    // Re-enable foreign keys
+                    sqliteContext.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
+
                     Console.WriteLine("==================================================");
-                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES & DATA MIGRATED 100% SUCCESSFULLY!");
+                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES & CHATS MIGRATED 100% SUCCESSFULLY!");
                     Console.WriteLine("==================================================");
                 }
             }
