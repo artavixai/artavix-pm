@@ -87,12 +87,17 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.EnsureCreated();
+
+        // Automatic Data Migration from SQL Server to SQLite if database is empty
+        string sqlServerConnStr = "Server=.;Database=PayvastProjectDb;User Id=sa;Password=Payvast@123;TrustServerCertificate=True;";
+        DataMigrator.MigrateFromSqlServerIfEmpty(context, sqlServerConnStr);
+
         DbInitializer.Initialize(context);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogError(ex, "An error occurred while seeding or migrating the database.");
     }
 }
 

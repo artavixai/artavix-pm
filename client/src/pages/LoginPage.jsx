@@ -35,10 +35,10 @@ const LoginPage = () => {
           <div className="text-center mb-8">
             <div className="inline-block mx-auto mb-4">
               <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center text-white font-black text-4xl shadow-lg shadow-blue-200">
-                P
+                A
               </div>
             </div>
-            <h1 className="text-2xl font-black text-slate-800">Welcome to Payvast</h1>
+            <h1 className="text-2xl font-black text-slate-800">Welcome to Artavix PM</h1>
             <p className="text-slate-500 text-sm mt-1.5 font-medium">Enterprise Project Management System</p>
           </div>
 
