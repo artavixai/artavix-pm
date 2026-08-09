@@ -1,0 +1,4 @@
+/* Placeholder for English Font Overrides if needed */
+body, button, input, select, textarea {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}

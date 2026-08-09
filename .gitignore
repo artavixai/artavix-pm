@@ -1,0 +1,38 @@
+# Node modules & dependencies
+**/node_modules/
+node_modules/
+client/node_modules/
+server/Payvast.API/node_modules/
+
+# Build outputs
+**/dist/
+**/dist-ssr/
+**/bin/
+**/obj/
+
+# Environment files & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# SQLite Database & Storage
+*.db
+*.db-shm
+*.db-wal
+artavix.db
+payvast.db
+
+# Downloads & Temp files
+TempDownloads/
+TempActions/
+wwwroot/documents/*
+!wwwroot/documents/.gitkeep
+
+# IDE and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.user

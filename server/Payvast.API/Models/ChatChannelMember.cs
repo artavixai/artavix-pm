@@ -1,0 +1,1 @@
+namespace Payvast.API.Models { public class ChatChannelMember { public int ChannelId { get; set; } public ChatChannel Channel { get; set; } public int UserId { get; set; } public User User { get; set; } } }

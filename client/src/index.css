@@ -1,0 +1,302 @@
+/* =================================================================== */
+/* === Modern English Google Fonts Import                              === */
+/* =================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* =============================================== */
+/* === Core Tailwind Directives                === */
+/* =============================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =================================================================== */
+/* === Global Typography & Modern Enterprise Design System            === */
+/* =================================================================== */
+* {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-color: #f8fafc;
+    --persian-blue: #3b82f6;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-pink: #ec4899;
+    --accent-cyan: #06b6d4;
+}
+
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: var(--text-primary);
+    direction: ltr;
+    text-align: left;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modern Flat Effects */
+.flat-raised {
+    background: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.flat-card {
+    background: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.flat-card.border-t-8 {
+    border-top-width: 6px !important;
+}
+
+.flat-button {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease-in-out;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.flat-button:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.flat-button:active,
+.flat-button.active {
+    background: var(--persian-blue);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25);
+}
+
+.flat-input {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.flat-input:focus {
+    border-color: var(--persian-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--persian-blue), var(--accent-purple));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-online {
+    width: 12px;
+    height: 12px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--persian-blue), var(--accent-purple));
+    height: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.scrollbar-flat::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-flat::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.scrollbar-flat::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.scrollbar-flat::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.task-item {
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    border: 1px solid #f1f5f9;
+}
+
+.task-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    border-color: var(--persian-blue);
+}
+
+.checkbox-flat {
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-flat:hover {
+    border-color: var(--persian-blue);
+}
+
+.checkbox-flat.checked {
+    background: var(--persian-blue);
+    border-color: var(--persian-blue);
+}
+
+.modal-backdrop {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+/* React Select Custom Styling */
+.css-13cymwt-control, .css-t3ipsp-control {
+    background: #ffffff !important;
+    border: 2px solid #e2e8f0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+}
+.css-13cymwt-control:hover, .css-t3ipsp-control:hover {
+    border-color: var(--persian-blue) !important;
+}
+.css-13cymwt-control:focus-within, .css-t3ipsp-control:focus-within {
+    border-color: var(--persian-blue) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
+}
+.css-1nmdiq5-menu {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+/* ReactQuill Styling */
+.ql-editor {
+    min-height: 120px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    text-align: left;
+    direction: ltr;
+}
+.ql-toolbar.ql-snow {
+    border-radius: 8px 8px 0 0;
+    border: 2px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ql-container.ql-snow {
+    border-radius: 0 0 8px 8px;
+    border: 2px solid #e2e8f0;
+    border-top: none;
+}
+
+/* Number Input Spinners Fix */
+.flat-input[type="number"]::-webkit-inner-spin-button,
+.flat-input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.flat-input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Table Fixed Utilities */
+.table-fixed {
+    table-layout: fixed;
+}
+.table-fixed th,
+.table-fixed td {
+    vertical-align: middle;
+}
+table.border-collapse {
+    border-collapse: collapse;
+}
+table.border-collapse th,
+table.border-collapse td {
+    border: 1px solid #e2e8f0;
+}
+
+/* Status Badges */
+.status-deviation {
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-weight: 600;
+}
+.status-done {
+    background-color: #dcfce7;
+    color: #16a34a;
+    font-weight: 600;
+}
+.status-inprogress {
+    background-color: #dbeafe;
+    color: #2563eb;
+    font-weight: 600;
+}
+.status-todo {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+}
+
+/* Animations */
+@keyframes slide-in-right {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-slide-out-right {
+    animation: slide-out-right 0.3s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+}
