@@ -11,7 +11,6 @@ namespace Payvast.API.Data
         {
             try
             {
-                // Check if SQLite database is already populated
                 if (sqliteContext.Projects.Any())
                 {
                     Console.WriteLine("[DataMigrator] SQLite database already contains data. Skipping migration.");
@@ -31,7 +30,6 @@ namespace Payvast.API.Data
                         return;
                     }
 
-                    // 1. Migrate Roles
                     var roles = sqlContext.Roles.AsNoTracking().ToList();
                     if (roles.Any() && !sqliteContext.Roles.Any())
                     {
@@ -40,7 +38,6 @@ namespace Payvast.API.Data
                         Console.WriteLine($"[DataMigrator] Migrated {roles.Count} roles.");
                     }
 
-                    // 2. Migrate Users
                     var users = sqlContext.Users.AsNoTracking().ToList();
                     if (users.Any() && !sqliteContext.Users.Any())
                     {
@@ -49,7 +46,6 @@ namespace Payvast.API.Data
                         Console.WriteLine($"[DataMigrator] Migrated {users.Count} users.");
                     }
 
-                    // 3. Migrate UserRoles
                     var userRoles = sqlContext.UserRoles.AsNoTracking().ToList();
                     if (userRoles.Any() && !sqliteContext.UserRoles.Any())
                     {
@@ -57,7 +53,6 @@ namespace Payvast.API.Data
                         sqliteContext.SaveChanges();
                     }
 
-                    // 4. Migrate ProductGroups & Subsystems
                     var productGroups = sqlContext.ProductGroups.Include(pg => pg.Subsystems).AsNoTracking().ToList();
                     if (productGroups.Any() && !sqliteContext.ProductGroups.Any())
                     {
@@ -66,7 +61,6 @@ namespace Payvast.API.Data
                         Console.WriteLine($"[DataMigrator] Migrated {productGroups.Count} product groups.");
                     }
 
-                    // 5. Migrate Projects
                     var projects = sqlContext.Projects.AsNoTracking().ToList();
                     if (projects.Any())
                     {
@@ -75,7 +69,6 @@ namespace Payvast.API.Data
                         Console.WriteLine($"[DataMigrator] Migrated {projects.Count} projects.");
                     }
 
-                    // 6. Migrate Tasks
                     var tasks = sqlContext.Tasks.AsNoTracking().ToList();
                     if (tasks.Any())
                     {
@@ -84,7 +77,6 @@ namespace Payvast.API.Data
                         Console.WriteLine($"[DataMigrator] Migrated {tasks.Count} tasks.");
                     }
 
-                    // 7. Migrate Notes
                     var notes = sqlContext.Notes.AsNoTracking().ToList();
                     if (notes.Any())
                     {
@@ -93,7 +85,6 @@ namespace Payvast.API.Data
                         Console.WriteLine($"[DataMigrator] Migrated {notes.Count} notes.");
                     }
 
-                    // 8. Migrate ChatChannels & Messages
                     var channels = sqlContext.ChatChannels.AsNoTracking().ToList();
                     if (channels.Any())
                     {
@@ -115,7 +106,6 @@ namespace Payvast.API.Data
                         sqliteContext.SaveChanges();
                     }
 
-                    // 9. Migrate Meetings
                     var meetings = sqlContext.Meetings.AsNoTracking().ToList();
                     if (meetings.Any())
                     {
@@ -123,7 +113,6 @@ namespace Payvast.API.Data
                         sqliteContext.SaveChanges();
                     }
 
-                    // 10. Migrate WeeklyPlans
                     var plans = sqlContext.WeeklyPlans.AsNoTracking().ToList();
                     if (plans.Any())
                     {

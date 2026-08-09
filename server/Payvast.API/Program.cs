@@ -90,7 +90,7 @@ using (var scope = app.Services.CreateScope())
 
         // Automatic Data Migration from SQL Server to SQLite if database is empty
         string sqlServerConnStr = "Server=.;Database=PayvastProjectDb;User Id=sa;Password=Payvast@123;TrustServerCertificate=True;";
-        DataMigrator.MigrateFromSqlServerIfEmpty(context, sqlServerConnStr);
+        Payvast.API.Data.DataMigrator.MigrateFromSqlServerIfEmpty(context, sqlServerConnStr);
 
         DbInitializer.Initialize(context);
     }

@@ -38,7 +38,7 @@ namespace Payvast.API.Services
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var setting = await context.SystemSettings.FirstOrDefaultAsync(s => s.FeatureName == "ShowBrowserDuringCrmScrape");
-                return setting == null || setting.IsEnabled; // Default true (Show Browser)
+                return setting == null || setting.IsEnabled;
             }
         }
 
@@ -172,7 +172,6 @@ namespace Payvast.API.Services
                 await page.EvaluateFunctionAsync($"(url) => {{ window.location.href = url; }}", PROJECTS_LIST_URL);
                 await System.Threading.Tasks.Task.Delay(5000);
 
-                // Set 'To Date' filter to Today
                 Console.WriteLine("    📅 Setting 'To Date' filter to Today...");
                 await page.EvaluateFunctionAsync(@"() => {
                     const calendars = document.querySelectorAll('.fa-calendar.pf_datepicker_trigger');
@@ -320,10 +319,6 @@ namespace Payvast.API.Services
             }
             return result;
         }
-
-        // ==================================================================================
-        // Section 2: Management of Detailed Actions with HashtagRules Support
-        // ==================================================================================
 
         public async System.Threading.Tasks.Task SyncProjectActionsAsync(int internalProjectId, string crmCode, string projectName)
         {
