@@ -86,11 +86,10 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated();
 
-        // Automatic Data Migration from SQL Server to SQLite if database is empty
+        // Force full migration from SQL Server to SQLite
         string sqlServerConnStr = "Server=.;Database=PayvastProjectDb;User Id=sa;Password=Payvast@123;TrustServerCertificate=True;";
-        Payvast.API.Data.DataMigrator.MigrateFromSqlServerIfEmpty(context, sqlServerConnStr);
+        Payvast.API.Data.DataMigrator.ForceMigrateFromSqlServer(context, sqlServerConnStr);
 
         DbInitializer.Initialize(context);
     }

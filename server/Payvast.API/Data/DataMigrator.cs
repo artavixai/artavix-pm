@@ -7,17 +7,11 @@ namespace Payvast.API.Data
 {
     public static class DataMigrator
     {
-        public static void MigrateFromSqlServerIfEmpty(ApplicationDbContext sqliteContext, string sqlServerConnStr)
+        public static void ForceMigrateFromSqlServer(ApplicationDbContext sqliteContext, string sqlServerConnStr)
         {
             try
             {
-                if (sqliteContext.Projects.Any())
-                {
-                    Console.WriteLine("[DataMigrator] SQLite database already contains data. Skipping migration.");
-                    return;
-                }
-
-                Console.WriteLine("[DataMigrator] SQLite database is empty. Starting FULL migration from SQL Server...");
+                Console.WriteLine("[DataMigrator] Connecting to SQL Server for FULL migration...");
 
                 var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
                 optionsBuilder.UseSqlServer(sqlServerConnStr);
@@ -26,9 +20,15 @@ namespace Payvast.API.Data
                 {
                     if (!sqlContext.Database.CanConnect())
                     {
-                        Console.WriteLine("[DataMigrator Warning] Could not connect to SQL Server. Proceeding with default seed.");
+                        Console.WriteLine("[DataMigrator Warning] Could not connect to SQL Server. Proceeding with existing SQLite data.");
                         return;
                     }
+
+                    // Clear existing SQLite data to ensure 100% clean copy
+                    sqliteContext.Database.EnsureDeleted();
+                    sqliteContext.Database.EnsureCreated();
+
+                    Console.WriteLine("[DataMigrator] SQLite database reset. Copying all tables...");
 
                     // 1. Roles
                     var roles = sqlContext.Roles.AsNoTracking().ToList();
@@ -36,7 +36,7 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Roles.AddRange(roles);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {roles.Count} roles.");
+                        Console.WriteLine($"[DataMigrator] Migrated {roles.Count} Roles.");
                     }
 
                     // 2. Users
@@ -45,7 +45,7 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Users.AddRange(users);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {users.Count} users.");
+                        Console.WriteLine($"[DataMigrator] Migrated {users.Count} Users.");
                     }
 
                     // 3. UserRoles
@@ -54,15 +54,16 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.UserRoles.AddRange(userRoles);
                         sqliteContext.SaveChanges();
+                        Console.WriteLine($"[DataMigrator] Migrated {userRoles.Count} UserRoles.");
                     }
 
-                    // 4. ProductGroups & Subsystems & TaskTemplates
+                    // 4. ProductGroups, Subsystems & TaskTemplates
                     var productGroups = sqlContext.ProductGroups.Include(pg => pg.Subsystems).AsNoTracking().ToList();
                     if (productGroups.Any())
                     {
                         sqliteContext.ProductGroups.AddRange(productGroups);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {productGroups.Count} product groups.");
+                        Console.WriteLine($"[DataMigrator] Migrated {productGroups.Count} ProductGroups.");
                     }
 
                     var stepTemplates = sqlContext.ProjectStepTemplates.AsNoTracking().ToList();
@@ -100,7 +101,7 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Projects.AddRange(projects);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {projects.Count} projects.");
+                        Console.WriteLine($"[DataMigrator] Migrated {projects.Count} Projects.");
                     }
 
                     var checklists = sqlContext.ProjectChecklists.AsNoTracking().ToList();
@@ -116,19 +117,19 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Tasks.AddRange(tasks);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {tasks.Count} tasks.");
+                        Console.WriteLine($"[DataMigrator] Migrated {tasks.Count} Tasks.");
                     }
 
-                    // 8. Notes & Reminders
+                    // 8. Notes
                     var notes = sqlContext.Notes.AsNoTracking().ToList();
                     if (notes.Any())
                     {
                         sqliteContext.Notes.AddRange(notes);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {notes.Count} notes.");
+                        Console.WriteLine($"[DataMigrator] Migrated {notes.Count} Notes.");
                     }
 
-                    // 9. Chat Channels, Members, Messages, Reactions & Unread
+                    // 9. Chat Channels, Members, Messages, Reactions
                     var channels = sqlContext.ChatChannels.AsNoTracking().ToList();
                     if (channels.Any())
                     {
@@ -148,7 +149,7 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.ChatMessages.AddRange(messages);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {messages.Count} chat messages.");
+                        Console.WriteLine($"[DataMigrator] Migrated {messages.Count} Chat Messages.");
                     }
 
                     var reactions = sqlContext.MessageReactions.AsNoTracking().ToList();
@@ -164,10 +165,10 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.Meetings.AddRange(meetings);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {meetings.Count} meetings.");
+                        Console.WriteLine($"[DataMigrator] Migrated {meetings.Count} Meetings.");
                     }
 
-                    // 11. Project FollowUps & Documents
+                    // 11. FollowUps & Documents
                     var followUps = sqlContext.ProjectFollowUps.AsNoTracking().ToList();
                     if (followUps.Any())
                     {
@@ -188,17 +189,17 @@ namespace Payvast.API.Data
                     {
                         sqliteContext.WeeklyPlans.AddRange(plans);
                         sqliteContext.SaveChanges();
-                        Console.WriteLine($"[DataMigrator] Migrated {plans.Count} weekly plans.");
+                        Console.WriteLine($"[DataMigrator] Migrated {plans.Count} Weekly Plans.");
                     }
 
                     Console.WriteLine("==================================================");
-                    Console.WriteLine("✅ [DataMigrator] 100% FULL MIGRATION COMPLETED SUCCESSFULLY!");
+                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES & DATA MIGRATED 100% SUCCESSFULLY!");
                     Console.WriteLine("==================================================");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DataMigrator Warning] SQL Server migration failed: {ex.Message}");
+                Console.WriteLine($"[DataMigrator Exception] {ex.Message}");
             }
         }
     }
