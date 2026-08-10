@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // Request Desktop Notification Permissions on mount
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
@@ -90,21 +89,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (user?.id) {
         const reminderHandler = (reminder) => {
+            // Filter out reminders meant for other users
+            if (reminder.UserId && String(reminder.UserId) !== String(user.id)) {
+                return;
+            }
+
             addNotification(reminder);
 
-            // 1. Play Audio Alarm
+            // 1. Audio Alarm Playback
             if (isSoundEnabled) {
                 const audio = new Audio('/alarm.mp3');
                 audio.play().catch(() => {
                     const fallbackAudio = new Audio('/notification.mp3');
-                    fallbackAudio.play().catch(e => console.error("Audio play blocked by browser:", e));
+                    fallbackAudio.play().catch(e => console.error("Audio play blocked:", e));
                 });
             }
 
-            // 2. Trigger System/Desktop OS Notification if browser is minimized
+            // 2. Browser OS Desktop Notification
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification(reminder.title || "Artavix PM Reminder", {
-                    body: stripHtml(reminder.content) || "Reminder alert time has arrived.",
+                new Notification(reminder.Title || reminder.title || "Artavix PM Reminder", {
+                    body: stripHtml(reminder.Content || reminder.content) || "Reminder alert time has arrived.",
                     icon: "/vite.svg"
                 });
             }
@@ -112,23 +116,23 @@ export const AuthProvider = ({ children }) => {
             let navigateTo = '/notes';
             let navigateState = null;
             
-            if (reminder.type === 'FollowUp' && reminder.projectId) {
-                navigateTo = `/projects/${reminder.projectId}`;
+            if (reminder.Type === 'FollowUp' && reminder.ProjectId) {
+                navigateTo = `/projects/${reminder.ProjectId}`;
                 navigateState = { activeTab: 'followups' };
-            } else if (reminder.type === 'Note') {
+            } else if (reminder.Type === 'Note' || reminder.type === 'Note') {
                 navigateTo = '/notes';
-                navigateState = { openNoteId: reminder.id };
+                navigateState = { openNoteId: reminder.Id || reminder.id };
             }
             
             toast.custom((t) => (
               <div onClick={() => { navigate(navigateTo, { state: navigateState }); toast.dismiss(t.id); }}
-                className={`${t.visible ? 'animate-slide-in-left' : 'animate-slide-out-left'} max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 cursor-pointer border border-blue-200`}>
+                className={`${t.visible ? 'animate-slide-in-left' : 'animate-slide-out-left'} max-w-sm w-full bg-white shadow-xl rounded-2xl pointer-events-auto flex ring-2 ring-blue-500 cursor-pointer p-1`}>
                 <div className="flex-1 w-0 p-4">
                   <div className="flex items-start">
-                    <div className="flex-shrink-0 pt-0.5"><div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md"><BellIcon /></div></div>
+                    <div className="flex-shrink-0 pt-0.5"><div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md"><BellIcon /></div></div>
                     <div className="ml-3 mr-3 flex-1">
-                      <p className="text-sm font-bold text-slate-800">{reminder.title}</p>
-                      <p className="mt-1 text-xs text-slate-500 truncate">{stripHtml(reminder.content) || 'Reminder alert'}</p>
+                      <p className="text-sm font-bold text-slate-800">{reminder.Title || reminder.title}</p>
+                      <p className="mt-1 text-xs text-slate-500 truncate">{stripHtml(reminder.Content || reminder.content) || 'Reminder alert'}</p>
                     </div>
                   </div>
                 </div>
@@ -139,7 +143,7 @@ export const AuthProvider = ({ children }) => {
                   </button>
                 </div>
               </div>
-            ), { duration: 10000 });
+            ), { duration: 15000 });
         };
 
         if (!chatService.connection || chatService.connection.state === signalR.HubConnectionState.Disconnected) {
@@ -147,9 +151,13 @@ export const AuthProvider = ({ children }) => {
               .then(() => {
                   console.log("Global SignalR connection established.");
                   if (chatService.connection) {
+                      chatService.connection.off("ReceiveReminder");
                       chatService.connection.on("ReceiveReminder", reminderHandler);
                   }
               }).catch(err => console.error("Global SignalR Connection Error:", err));
+        } else {
+            chatService.connection.off("ReceiveReminder");
+            chatService.connection.on("ReceiveReminder", reminderHandler);
         }
 
         return () => {

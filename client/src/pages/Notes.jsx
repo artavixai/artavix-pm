@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { noteService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import moment from 'jalali-moment';
-import JalaliDatePickerCustom from '../components/common/CustomDatePicker';
+import CustomDatePicker from '../components/common/CustomDatePicker';
 import CustomTextEditor from '../components/common/CustomTextEditor';
 
 const BellIcon = ({ className = "w-4 h-4 mr-1 text-slate-400" }) => <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>;
@@ -20,13 +20,13 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
   useEffect(() => {
     if (isOpen) {
       if (note) {
-        setTitle(note.title);
+        setTitle(note.title || '');
         setContent(note.content || '');
         setCategory(note.category || 'Personal');
         if (note.reminderDate) {
-          const m = moment.utc(note.reminderDate).local();
-          setReminderDate(m.format('YYYY/MM/DD'));
-          setReminderTime(m.format('HH:mm'));
+          const m = moment(note.reminderDate);
+          setReminderDate(m.isValid() ? m.format('YYYY/MM/DD') : '');
+          setReminderTime(m.isValid() ? m.format('HH:mm') : '09:00');
           setReminderOffset(note.reminderOffsetMinutes ?? 0); 
         } else {
           setReminderDate('');
@@ -50,7 +50,7 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
     let finalReminderDate = null;
     if (reminderDate) {
       const [hour, minute] = reminderTime.split(':').map(Number);
-      const m = moment(reminderDate, 'YYYY/MM/DD').hour(hour).minute(minute);
+      const m = moment(reminderDate, 'YYYY/MM/DD').hour(hour || 0).minute(minute || 0).second(0).millisecond(0);
       finalReminderDate = m.toISOString();
     }
     onSave({ id: note?.id, title, content, category, reminderDate: finalReminderDate, reminderOffsetMinutes: reminderOffset });
@@ -74,7 +74,7 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
             <div className="md:col-span-1">
               <label className="block text-xs font-bold text-slate-700 mb-2">Reminder Date</label>
-              <JalaliDatePickerCustom value={reminderDate} onChange={setReminderDate} />
+              <CustomDatePicker value={reminderDate} onChange={setReminderDate} />
             </div>
             <div><label className="block text-xs font-bold text-slate-700 mb-2">Reminder Time</label><input type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} className="flat-input w-full text-xs py-2" /></div>
             <div>
@@ -197,8 +197,8 @@ const Notes = () => {
             const style = categoryStyles[note.category] || categoryStyles.default;
             let displayDate;
             if (note.reminderDate) {
-              const reminderMoment = moment.utc(note.reminderDate).local();
-              displayDate = reminderMoment.format('YYYY/MM/DD - HH:mm');
+              const reminderMoment = moment(note.reminderDate);
+              displayDate = reminderMoment.isValid() ? reminderMoment.format('YYYY/MM/DD - HH:mm') : 'Date Error';
             } else {
               displayDate = moment(note.updatedAt).format('YYYY/MM/DD');
             }

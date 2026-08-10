@@ -17,17 +17,17 @@ namespace Payvast.API.Services
         private readonly IHubContext<ChatHub> _hubContext;
         private readonly ILogger<ReminderService> _logger;
 
-        public ReminderService(IServiceScopeFactory scopeFactory, IHubContext<ChatHub> hubContext, ILogger<ReminderService> _logger)
+        public ReminderService(IServiceScopeFactory scopeFactory, IHubContext<ChatHub> hubContext, ILogger<ReminderService> logger)
         {
             _scopeFactory = scopeFactory;
             _hubContext = hubContext;
-            this._logger = _logger;
+            _logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("ReminderService started.");
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
+            _logger.LogInformation("ReminderService started. Checking every 5 seconds...");
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
             return Task.CompletedTask;
         }
 
@@ -38,25 +38,28 @@ namespace Payvast.API.Services
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var now = DateTime.UtcNow;
+                    var nowUtc = DateTime.UtcNow;
 
                     // 1. Note Reminders
-                    var noteReminders = await dbContext.Notes
+                    var pendingNotes = await dbContext.Notes
                         .Where(n => n.ReminderDate.HasValue && !n.ReminderSent)
                         .ToListAsync();
 
-                    var dueNotes = noteReminders
-                        .Where(n => n.ReminderDate.Value.AddMinutes(-(n.ReminderOffsetMinutes ?? 0)) <= now)
-                        .ToList();
+                    var dueNotes = pendingNotes.Where(n => {
+                        var reminderUtc = DateTime.SpecifyKind(n.ReminderDate.Value, DateTimeKind.Utc);
+                        var triggerTime = reminderUtc.AddMinutes(-(n.ReminderOffsetMinutes ?? 0));
+                        return triggerTime <= nowUtc;
+                    }).ToList();
 
                     // 2. FollowUp Reminders
-                    var followUpReminders = await dbContext.ProjectFollowUps
+                    var pendingFollowUps = await dbContext.ProjectFollowUps
                         .Where(f => f.ReminderDate.HasValue && !f.ReminderSent && !f.IsResolved)
                         .ToListAsync();
 
-                    var dueFollowUps = followUpReminders
-                        .Where(f => f.ReminderDate.Value <= now)
-                        .ToList();
+                    var dueFollowUps = pendingFollowUps.Where(f => {
+                        var reminderUtc = DateTime.SpecifyKind(f.ReminderDate.Value, DateTimeKind.Utc);
+                        return reminderUtc <= nowUtc;
+                    }).ToList();
 
                     if (!dueNotes.Any() && !dueFollowUps.Any())
                     {
@@ -65,14 +68,18 @@ namespace Payvast.API.Services
 
                     foreach (var note in dueNotes)
                     {
-                        _logger.LogInformation($"[ReminderService] Triggering Note Reminder ID: {note.Id}, Title: '{note.Title}'");
-                        await _hubContext.Clients.User(note.UserId.ToString()).SendAsync("ReceiveReminder", new
+                        _logger.LogInformation($"[ReminderService] Triggering Note Reminder ID: {note.Id}, Title: '{note.Title}' for User: {note.UserId}");
+                        
+                        var payload = new
                         {
-                            note.Id,
-                            note.Title,
+                            Id = note.Id,
+                            UserId = note.UserId,
+                            Title = note.Title,
                             Content = note.Content ?? "Reminder alert",
                             Type = "Note"
-                        });
+                        };
+
+                        await _hubContext.Clients.All.SendAsync("ReceiveReminder", payload);
                         note.ReminderSent = true;
                     }
 
@@ -80,15 +87,19 @@ namespace Payvast.API.Services
                     {
                         var project = await dbContext.Projects.FindAsync(followUp.ProjectId);
                         var projectTitle = project?.Title ?? "Project";
-                        _logger.LogInformation($"[ReminderService] Triggering FollowUp Reminder ID: {followUp.Id}");
-                        await _hubContext.Clients.User(followUp.UserId.ToString()).SendAsync("ReceiveReminder", new
+                        _logger.LogInformation($"[ReminderService] Triggering FollowUp Reminder ID: {followUp.Id} for User: {followUp.UserId}");
+                        
+                        var payload = new
                         {
                             Id = followUp.Id,
+                            UserId = followUp.UserId,
                             Title = $"FollowUp: {projectTitle}",
                             Content = followUp.Content,
                             Type = "FollowUp",
                             ProjectId = followUp.ProjectId
-                        });
+                        };
+
+                        await _hubContext.Clients.All.SendAsync("ReceiveReminder", payload);
                         followUp.ReminderSent = true;
                     }
 
