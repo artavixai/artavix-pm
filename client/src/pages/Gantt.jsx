@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import moment from 'jalali-moment';
 import { Popover, Transition } from '@headlessui/react';
-import JalaliDatePickerCustom from '../components/common/CustomDatePicker';
+import CustomDatePicker from '../components/common/CustomDatePicker';
 import { projectService, taskService, basicDataService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import ProjectTreeSelector from '../components/common/ProjectTreeSelector';
@@ -23,7 +23,7 @@ const AddFromTemplateModal = ({ isOpen, onClose, onAdd }) => {
             setLoading(true);
             basicDataService.getProductGroupsTree()
                 .then(res => setGroups(res.data))
-                .catch(err => toast.error("Error fetching master data."))
+                .catch(() => toast.error("Error fetching master data."))
                 .finally(() => setLoading(false));
 
             setSelectedSubsystems(new Set());
@@ -54,15 +54,15 @@ const AddFromTemplateModal = ({ isOpen, onClose, onAdd }) => {
     
     return (
         <AnimatePresence>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={onClose} dir="ltr">
-                <motion.div initial={{ y: "-50px", opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: "50px", opacity: 0 }} className="flat-card rounded-2xl p-6 w-full max-w-4xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={onClose} dir="ltr">
+                <div className="flat-card rounded-2xl p-6 w-full max-w-4xl h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                     <h2 className="text-2xl font-bold mb-1 text-slate-900">Add Tasks from Process Template</h2>
                     <p className="text-slate-500 mb-6 text-sm">Select one or more subsystems to add standard template tasks to the Gantt Chart.</p>
                     
                     <div className="mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
                         <label className="block text-xs font-bold mb-2 text-slate-700">Task Start Date</label>
                         <div className="w-64">
-                            <JalaliDatePickerCustom value={startDate} onChange={setStartDate} />
+                            <CustomDatePicker value={startDate} onChange={setStartDate} />
                         </div>
                         <p className="text-xs text-slate-400 mt-2">New tasks will be scheduled starting from this date.</p>
                     </div>
@@ -100,8 +100,8 @@ const AddFromTemplateModal = ({ isOpen, onClose, onAdd }) => {
                              {isSubmitting ? "Adding..." : `Add ${selectedSubsystems.size > 0 ? `(${selectedSubsystems.size})` : ''} Subsystems`}
                         </button>
                     </div>
-                </motion.div>
-            </motion.div>
+                </div>
+            </div>
         </AnimatePresence>
     );
 };
@@ -112,7 +112,7 @@ const ColorPickerPopover = ({ label, color, setColor }) => {
     <div>
       <label className="block text-xs font-bold mb-2 text-slate-600">{label}</label>
       <Popover className="relative">
-        {({ open, close }) => (<>
+        {({ close }) => (<>
             <Popover.Button className="w-full flex items-center justify-between flat-input py-2 px-3">
               <span className="text-slate-700 text-xs">Select Color</span>
               <div className="w-5 h-5 rounded-md border border-slate-300" style={{ backgroundColor: color }}></div>
@@ -195,8 +195,8 @@ const TaskModal = ({ isOpen, onClose, onSave, taskToEdit }) => {
 
   return (
     <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40 flex justify-center items-center p-4" onClick={onClose} dir="ltr">
-        <motion.div initial={{ y: "-50px", opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: "50px", opacity: 0 }} className="flat-card rounded-2xl p-8 w-full max-w-2xl bg-white" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40 flex justify-center items-center p-4" onClick={onClose} dir="ltr">
+        <div className="flat-card rounded-2xl p-8 w-full max-w-2xl bg-white" onClick={(e) => e.stopPropagation()}>
           <h2 className="text-xl font-bold mb-6 text-slate-900">{taskToEdit ? 'Edit Task' : 'Add New Task'}</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -204,8 +204,8 @@ const TaskModal = ({ isOpen, onClose, onSave, taskToEdit }) => {
               <div><label className="block text-xs font-bold mb-2 text-slate-600">Weight (%)</label><input type="number" min="0" max="100" value={formData.weight || ''} onChange={(e) => handleChange('weight', parseInt(e.target.value, 10))} className="flat-input w-full text-xs py-2" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div><label className="block text-xs font-bold mb-2 text-slate-600">Start Date</label><JalaliDatePickerCustom value={formData.startDate} onChange={(val) => handleChange('startDate', val)} /></div>
-              <div><label className="block text-xs font-bold mb-2 text-slate-600">End Date</label><JalaliDatePickerCustom value={formData.endDate} onChange={(val) => handleChange('endDate', val)} /></div>
+              <div><label className="block text-xs font-bold mb-2 text-slate-600">Start Date</label><CustomDatePicker value={formData.startDate} onChange={(val) => handleChange('startDate', val)} /></div>
+              <div><label className="block text-xs font-bold mb-2 text-slate-600">End Date</label><CustomDatePicker value={formData.endDate} onChange={(val) => handleChange('endDate', val)} /></div>
             </div>
             
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -244,8 +244,8 @@ const TaskModal = ({ isOpen, onClose, onSave, taskToEdit }) => {
             {error && <p className="text-red-500 text-xs font-bold">{error}</p>}
             <div className="flex justify-end gap-3 pt-4"><button type="button" onClick={onClose} className="flat-button px-6 py-2 rounded-lg font-bold text-xs">Cancel</button><button type="submit" className="px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 font-bold transition-colors text-xs"> {taskToEdit ? 'Save Changes' : 'Create Task'}</button></div>
           </form>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </AnimatePresence>
   );
 };
@@ -339,14 +339,12 @@ const TaskBar = ({ task, rowIndex, onUpdate, dateToDayIndex, onDoubleClick }) =>
     };
 
     return (
-        <motion.div
-            layout
+        <div
             style={{
                 gridRowStart: rowIndex,
                 gridColumn: `${dateToDayIndex(task.startDate)} / span ${task.durationInDays}`,
             }}
-            className="flex items-center h-full p-1 group z-10"
-            transition={{ type: 'spring', stiffness: 600, damping: 30 }}
+            className="flex items-center h-full p-1 group z-10 transition-all duration-200"
         >
             <div
                 onMouseDown={(e) => isInteracting ? null : handleMouseDown(e, 'drag')}
@@ -354,22 +352,15 @@ const TaskBar = ({ task, rowIndex, onUpdate, dateToDayIndex, onDoubleClick }) =>
                 className={`relative w-full h-[60%] rounded-md flex items-center justify-center px-2 text-xs font-bold text-white select-none transition-shadow hover:shadow-lg ${isInteracting === 'drag' ? 'cursor-grabbing opacity-75 shadow-xl scale-105' : 'cursor-grab'}`}
                 style={{ backgroundColor: task.plannedColor }}
             >
-                <motion.div 
-                    className="absolute top-0 left-0 bottom-0 h-full rounded-l-md pointer-events-none" 
-                    style={{ backgroundColor: task.executedColor }}
-                    initial={false}
-                    animate={{ width: `${task.progress || 0}%` }}
-                    transition={{ duration: 0.1, ease: "linear" }}
+                <div 
+                    className="absolute top-0 left-0 bottom-0 h-full rounded-l-md pointer-events-none transition-all duration-100" 
+                    style={{ backgroundColor: task.executedColor, width: `${task.progress || 0}%` }}
                 />
                 
-                <motion.div
+                <div
                     onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(e, 'progress'); }}
                     className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow border-2 border-slate-700 cursor-ew-resize z-20 transition-opacity ${isInteracting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                     style={{ left: `calc(${task.progress || 0}% - 6px)`}}
-                    whileHover={{ scale: 1.5 }}
-                    initial={false}
-                    animate={{ left: `calc(${task.progress || 0}% - 6px)`}}
-                    transition={{ duration: 0.1, ease: "linear" }}
                 />
 
                 <span className="relative truncate">{`${task.title} (${Math.round(task.completedUnits || 0)}/${task.totalUnits || 0})`}</span>
@@ -381,14 +372,13 @@ const TaskBar = ({ task, rowIndex, onUpdate, dateToDayIndex, onDoubleClick }) =>
                     </>
                 )}
             </div>
-        </motion.div>
+        </div>
     );
 };
 
 const GanttPage = () => {
     const [tasks, setTasks] = useState([]);
     const gridRef = useRef(null);
-    const [projects, setProjects] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
     const [loadingTasks, setLoadingTasks] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -402,14 +392,18 @@ const GanttPage = () => {
         try {
             const res = await taskService.getGanttTasksForProject(projectId);
             setTasks(res.data);
-        } catch (err) { toast.error("Error fetching Gantt chart tasks."); setTasks([]); } 
-        finally { setLoadingTasks(false); }
+        } catch (err) { 
+            console.error(err);
+            toast.error("Error fetching Gantt chart tasks."); 
+            setTasks([]); 
+        } finally { 
+            setLoadingTasks(false); 
+        }
     }, []);
 
     useEffect(() => {
         projectService.getAllFlat().then(res => {
             const projectOptions = res.data.map(p => ({ value: p.id, label: p.title }));
-            setProjects(projectOptions);
             if (projectOptions.length > 0) setSelectedProject(projectOptions[0]);
         }).catch(err => console.error("Failed to fetch projects:", err));
     }, []);
@@ -419,7 +413,19 @@ const GanttPage = () => {
     }, [selectedProject, fetchTasks]);
 
     const { days, months, viewStartDate } = useMemo(() => {
-        const viewStartDate = moment().startOf('month').startOf('day');
+        let viewStartDate = moment().startOf('month').startOf('day');
+        
+        if (tasks && tasks.length > 0) {
+            const earliestTaskStart = tasks
+                .map(t => moment(t.startDate, 'YYYY/MM/DD'))
+                .filter(m => m.isValid())
+                .sort((a, b) => a.valueOf() - b.valueOf())[0];
+            
+            if (earliestTaskStart && earliestTaskStart.isBefore(viewStartDate)) {
+                viewStartDate = earliestTaskStart.clone().startOf('month').startOf('day');
+            }
+        }
+
         const endView = viewStartDate.clone().add(12, 'months').endOf('month');
         const dayArray = [];
         const monthArray = [];
@@ -431,20 +437,36 @@ const GanttPage = () => {
             currentMonth.add(1, 'month');
         }
         return { days: dayArray, months: monthArray, viewStartDate };
-    }, []);
+    }, [tasks]);
 
     const dateToDayIndex = useCallback((dateStr) => {
         if (!dateStr) return 1;
         const taskDate = moment(dateStr, 'YYYY/MM/DD').startOf('day');
         if (!taskDate.isValid()) return 1;
         const daysDiff = taskDate.diff(viewStartDate, 'days');
-        return daysDiff + 1;
+        return Math.max(1, daysDiff + 1);
     }, [viewStartDate]);
-    
+
+    useEffect(() => {
+        if (tasks && tasks.length > 0 && gridRef.current) {
+            const earliestTask = tasks
+                .map(t => ({ ...t, m: moment(t.startDate, 'YYYY/MM/DD') }))
+                .filter(t => t.m.isValid())
+                .sort((a, b) => a.m.valueOf() - b.m.valueOf())[0];
+
+            if (earliestTask) {
+                const dayIndex = dateToDayIndex(earliestTask.startDate);
+                const scrollLeftPos = Math.max(0, (dayIndex - 2) * CELL_WIDTH);
+                gridRef.current.scrollLeft = scrollLeftPos;
+            }
+        }
+    }, [tasks, dateToDayIndex]);
+
     const handleSaveTask = async (taskData) => {
         try {
             const projectId = selectedProject.value;
-            const { progress, ...payload } = taskData;
+            const payload = { ...taskData };
+            delete payload.progress;
             
             if (payload.id) {
                 await taskService.updateGanttTask(projectId, payload.id, payload);
@@ -549,7 +571,7 @@ const GanttPage = () => {
                         }
                     }
                     
-                    if (updates.hasOwnProperty('completedUnits')) {
+                    if (Object.prototype.hasOwnProperty.call(updates, 'completedUnits')) {
                          const newProgress = (updatedTask.totalUnits || 1) > 0 
                             ? Math.round(((updatedTask.completedUnits || 0) / updatedTask.totalUnits) * 100) 
                             : 0;
@@ -567,7 +589,8 @@ const GanttPage = () => {
                     try {
                         const taskToSave = newTasks.find(t => t.id.toString() === taskId.toString());
                         if (!selectedProject) throw new Error("No project selected");
-                        const { progress, ...payload } = taskToSave;
+                        const payload = { ...taskToSave };
+                        delete payload.progress;
                         await taskService.updateGanttTask(selectedProject.value, taskId, payload);
                         toast.success("Task updated.", { id: `task-update-${taskId}`, duration: 2000 });
                     } catch (err) {
