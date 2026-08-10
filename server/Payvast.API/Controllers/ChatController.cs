@@ -45,8 +45,8 @@ namespace Payvast.API.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                var otherMembers = await _context.ChatChannelMembers
-                    .Where(m => myChannelMemberships.Contains(m.ChannelId) && m.UserId != userId)
+                var allChannelMembers = await _context.ChatChannelMembers
+                    .Where(m => myChannelMemberships.Contains(m.ChannelId))
                     .Include(m => m.User)
                     .AsNoTracking()
                     .ToListAsync();
@@ -76,12 +76,14 @@ namespace Payvast.API.Controllers
                     }
                     else
                     {
-                        var otherMember = otherMembers.FirstOrDefault(m => m.ChannelId == channel.Id);
+                        var otherMember = allChannelMembers.FirstOrDefault(m => m.ChannelId == channel.Id && m.UserId != userId);
+                        var targetUser = otherMember?.User ?? allChannelMembers.FirstOrDefault(m => m.ChannelId == channel.Id)?.User;
+
                         directChannels.Add(new
                         {
                             channel.Id,
-                            Name = otherMember?.User?.FullName ?? "Deleted User",
-                            AvatarUrl = otherMember?.User?.AvatarUrl,
+                            Name = targetUser?.FullName ?? channel.Name ?? "Direct Contact",
+                            AvatarUrl = targetUser?.AvatarUrl,
                             ChannelType = "Direct",
                             UnreadCount = unreadCount
                         });
