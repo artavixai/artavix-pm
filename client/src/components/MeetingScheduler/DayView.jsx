@@ -1,10 +1,12 @@
 import React from 'react';
 import moment from 'moment';
-import { motion } from 'framer-motion';
+import { Motion } from 'framer-motion';
 import { formatDigit } from './helpers';
 
 const DayView = ({ currentDate, meetings, onMeetingClick }) => {
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+
+    const safeMeetings = (meetings || []).filter(Boolean);
 
     return (
         <div className="flex-grow overflow-y-auto relative p-4 pl-14 scrollbar-flat" dir="ltr">
@@ -15,7 +17,8 @@ const DayView = ({ currentDate, meetings, onMeetingClick }) => {
                     </div>
                 ))}
 
-                {meetings.map(meeting => {
+                {safeMeetings.map(meeting => {
+                    if (!meeting.startTime || !meeting.endTime) return null;
                     const start = moment(meeting.startTime);
                     const end = moment(meeting.endTime);
                     
@@ -29,7 +32,7 @@ const DayView = ({ currentDate, meetings, onMeetingClick }) => {
                     if (start.isSame(currentDate, 'day')) {
                         return (
                             <motion.div
-                                key={meeting.id}
+                                key={meeting.id || Math.random()}
                                 className="absolute left-4 right-4 p-3 rounded-2xl text-white text-xs cursor-pointer z-10 overflow-hidden shadow-md"
                                 style={{
                                     top: `${top}px`,
@@ -38,7 +41,7 @@ const DayView = ({ currentDate, meetings, onMeetingClick }) => {
                                 }}
                                 onClick={() => onMeetingClick(meeting)}
                             >
-                                <p className="font-bold text-sm">{meeting.title}</p>
+                                <p className="font-bold text-sm">{meeting.title || 'Meeting'}</p>
                                 <p className="text-xs opacity-90 mt-1">{formatDigit(`${start.format('HH:mm')} - ${end.format('HH:mm')}`)}</p>
                             </motion.div>
                         );

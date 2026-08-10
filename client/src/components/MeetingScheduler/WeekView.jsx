@@ -1,6 +1,6 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import moment from 'moment';
-import { motion } from 'framer-motion';
+import { Motion } from 'framer-motion';
 import { formatDigit } from './helpers';
 
 const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
@@ -12,6 +12,8 @@ const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
 
     const gridRef = useRef(null);
     const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+    const safeMeetings = (meetings || []).filter(Boolean);
 
     useLayoutEffect(() => {
         if (gridRef.current) {
@@ -59,7 +61,8 @@ const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
                     </div>
                     
                     <div className="absolute inset-0 pointer-events-none">
-                        {meetings.map(meeting => {
+                        {safeMeetings.map(meeting => {
+                            if (!meeting.startTime || !meeting.endTime) return null;
                             const start = moment(meeting.startTime);
                             const end = moment(meeting.endTime);
                             
@@ -75,7 +78,7 @@ const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
                             if (dayIndex >= 0 && dayIndex < 7) {
                                 return (
                                     <motion.div
-                                        key={meeting.id}
+                                        key={meeting.id || Math.random()}
                                         className="absolute p-2 rounded-xl text-white text-xs cursor-pointer z-10 overflow-hidden flex flex-col pointer-events-auto shadow-md"
                                         style={{
                                             top: `${top}px`,
@@ -86,7 +89,7 @@ const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
                                         }}
                                         onClick={(e) => { e.stopPropagation(); onMeetingClick(meeting); }}
                                     >
-                                        <p className="font-bold text-xs truncate">{meeting.title}</p>
+                                        <p className="font-bold text-xs truncate">{meeting.title || 'Meeting'}</p>
                                         <p className="text-[10px] opacity-90 mt-0.5">{formatDigit(`${start.format('HH:mm')} - ${end.format('HH:mm')}`)}</p>
                                     </motion.div>
                                 );
