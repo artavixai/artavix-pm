@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Icons } from '../icons';
 import CustomDatePicker from '../common/CustomDatePicker';
 import CustomTextEditor from '../common/CustomTextEditor';
@@ -8,13 +8,13 @@ import { userService } from '../../services/apiService';
 import toast from 'react-hot-toast';
 
 const MeetingModal = ({
-  isOpen,
-  onClose,
-  onSave,
-  onDelete,
-  selectedMeeting,
-  initialDate,
-  projectId
+  isOpen = false,
+  onClose = () => {},
+  onSave = () => {},
+  onDelete = () => {},
+  selectedMeeting = null,
+  initialDate = null,
+  projectId = null
 }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -29,18 +29,18 @@ const MeetingModal = ({
     if (isOpen) {
       setLoadingUsers(true);
       userService.getAll().then(res => {
-        setAvailableUsers(res.data);
+        setAvailableUsers(res.data || []);
       }).catch(err => {
-        console.error(err);
+        console.error("Error fetching users:", err);
         toast.error("Error fetching users list");
       }).finally(() => setLoadingUsers(false));
 
       if (selectedMeeting) {
-        setTitle(selectedMeeting.title);
+        setTitle(selectedMeeting.title || '');
         const startMoment = moment(selectedMeeting.startTime);
-        setDate(startMoment.format('YYYY/MM/DD'));
-        setStartTime(startMoment.format('HH:mm'));
-        setEndTime(moment(selectedMeeting.endTime).format('HH:mm'));
+        setDate(startMoment.isValid() ? startMoment.format('YYYY/MM/DD') : moment().format('YYYY/MM/DD'));
+        setStartTime(startMoment.isValid() ? startMoment.format('HH:mm') : '09:00');
+        setEndTime(moment(selectedMeeting.endTime).isValid() ? moment(selectedMeeting.endTime).format('HH:mm') : '10:00');
         setParticipants(selectedMeeting.participants || []);
         setAgenda(selectedMeeting.agenda || '');
       } else {
@@ -63,11 +63,11 @@ const MeetingModal = ({
       return;
     }
     const startMoment = moment(date, 'YYYY/MM/DD')
-      .hour(parseInt(startTime.split(':')[0]))
-      .minute(parseInt(startTime.split(':')[1]));
+      .hour(parseInt(startTime.split(':')[0], 10) || 9)
+      .minute(parseInt(startTime.split(':')[1], 10) || 0);
     const endMoment = moment(date, 'YYYY/MM/DD')
-      .hour(parseInt(endTime.split(':')[0]))
-      .minute(parseInt(endTime.split(':')[1]));
+      .hour(parseInt(endTime.split(':')[0], 10) || 10)
+      .minute(parseInt(endTime.split(':')[1], 10) || 0);
 
     const newMeeting = {
       id: selectedMeeting?.id,
@@ -83,8 +83,10 @@ const MeetingModal = ({
   };
 
   const handleAddParticipant = (participant) => {
+    if (!participant) return;
+    const participantName = participant.fullName || participant.name || 'User';
     if (!participants.some(p => p.id === participant.id)) {
-      setParticipants(prev => [...prev, { id: participant.id, name: participant.fullName, email: participant.email }]);
+      setParticipants(prev => [...prev, { id: participant.id, name: participantName, email: participant.email || '' }]);
     }
   };
 
@@ -92,22 +94,22 @@ const MeetingModal = ({
     setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
 
+  const getFirstLetter = (name) => {
+    if (!name || typeof name !== 'string') return 'M';
+    const trimmed = name.trim();
+    return trimmed.length > 0 ? trimmed.charAt(0).toUpperCase() : 'M';
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity animate-fade-in"
           onClick={onClose}
           dir="ltr"
         >
-          <motion.div
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-300 scale-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 border-b bg-slate-50">
@@ -146,10 +148,12 @@ const MeetingModal = ({
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-2">Participants</label>
                 <div className="flex flex-wrap gap-2 items-center">
-                  {participants.map(p => (
+                  {(participants || []).map(p => (
                     <div key={p.id} className="flex items-center gap-2 bg-slate-100 rounded-full pl-3 pr-1 py-1 text-xs font-semibold text-slate-700">
-                      <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">{p.name[0]}</div>
-                      <span>{p.name}</span>
+                      <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                        {getFirstLetter(p.name || p.fullName)}
+                      </div>
+                      <span>{p.name || p.fullName || 'Participant'}</span>
                       <button onClick={() => handleRemoveParticipant(p.id)} className="text-slate-400 hover:text-red-500">
                         <Icons.Close className="w-3.5 h-3.5"/>
                       </button>
@@ -160,15 +164,19 @@ const MeetingModal = ({
                       <Icons.Plus className="w-4 h-4"/>
                     </button>
                     <div className="absolute hidden group-hover:block z-10 left-0 mt-1 bg-white shadow-xl border border-slate-100 rounded-2xl w-56 text-xs max-h-60 overflow-y-auto p-1 scrollbar-flat">
-                      {availableUsers.map(user => (
-                        <button 
-                          key={user.id} 
-                          onClick={() => handleAddParticipant(user)}
-                          className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-xl font-semibold text-slate-700 transition-colors"
-                        >
-                          {user.fullName}
-                        </button>
-                      ))}
+                      {loadingUsers ? (
+                        <div className="p-2 text-center text-slate-400">Loading users...</div>
+                      ) : (
+                        (availableUsers || []).map(user => (
+                          <button 
+                            key={user.id} 
+                            onClick={() => handleAddParticipant(user)}
+                            className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-xl font-semibold text-slate-700 transition-colors"
+                          >
+                            {user.fullName || user.username}
+                          </button>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -194,8 +202,8 @@ const MeetingModal = ({
                 <button onClick={handleSave} className="px-6 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100">Save</button>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </AnimatePresence>
   );
