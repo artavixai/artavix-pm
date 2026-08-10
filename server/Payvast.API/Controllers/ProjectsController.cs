@@ -608,18 +608,70 @@ namespace Payvast.API.Controllers
         {
             var project = await _context.Projects.FindAsync(id);
             if (project == null) return NotFound("Project not found.");
-            if (string.IsNullOrEmpty(project.ProductGroup)) return BadRequest("Product group is not configured for this project.");
-            var productGroup = await _context.ProductGroups.FirstOrDefaultAsync(pg => pg.Name == project.ProductGroup);
-            if (productGroup == null) return BadRequest($"Product group '{project.ProductGroup}' is not defined in system.");
-            var stepTemplates = await _context.ProjectStepTemplates.Where(pst => pst.ProductGroupId == productGroup.Id && pst.IsActive).OrderBy(pst => pst.DisplayOrder).ToListAsync();
-            if (!stepTemplates.Any()) return BadRequest("No active step templates defined for this product group.");
-            var existingSteps = await _context.ProjectChecklists.Where(c => c.ProjectId == id).ToListAsync();
-            _context.ProjectChecklists.RemoveRange(existingSteps);
-            foreach (var step in stepTemplates)
+
+            string groupName = string.IsNullOrEmpty(project.ProductGroup) ? "General" : project.ProductGroup.Trim();
+
+            var productGroup = await _context.ProductGroups
+                .FirstOrDefaultAsync(pg => pg.Name.ToLower() == groupName.ToLower());
+
+            if (productGroup == null)
             {
-                _context.ProjectChecklists.Add(new ProjectChecklist { ProjectId = id, StepName = step.StepName, IsCompleted = false });
+                productGroup = new ProductGroup { Name = groupName, Color = "#3b82f6" };
+                _context.ProductGroups.Add(productGroup);
+                await _context.SaveChangesAsync();
+            }
+
+            var stepTemplates = await _context.ProjectStepTemplates
+                .Where(pst => pst.ProductGroupId == productGroup.Id && pst.IsActive)
+                .OrderBy(pst => pst.DisplayOrder)
+                .ToListAsync();
+
+            if (!stepTemplates.Any())
+            {
+                var defaultStepNames = new[] { "Analysis & Requirements", "Design & Architecture", "Implementation & Setup", "Testing & QA", "Final Handover" };
+                int order = 1;
+                foreach (var name in defaultStepNames)
+                {
+                    var st = new ProjectStepTemplate
+                    {
+                        ProductGroupId = productGroup.Id,
+                        StepName = name,
+                        DisplayOrder = order++,
+                        IsActive = true
+                    };
+                    _context.ProjectStepTemplates.Add(st);
+                    stepTemplates.Add(st);
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            var existingSteps = await _context.ProjectChecklists.Where(c => c.ProjectId == id).ToListAsync();
+            var existingStepIds = existingSteps.Select(s => s.Id).ToList();
+
+            var linkedTasks = await _context.Tasks
+                .Where(t => t.ProjectId == id && t.ChecklistStepId.HasValue && existingStepIds.Contains(t.ChecklistStepId.Value))
+                .ToListAsync();
+
+            foreach (var t in linkedTasks)
+            {
+                t.ChecklistStepId = null;
             }
             await _context.SaveChangesAsync();
+
+            _context.ProjectChecklists.RemoveRange(existingSteps);
+            await _context.SaveChangesAsync();
+
+            foreach (var step in stepTemplates)
+            {
+                _context.ProjectChecklists.Add(new ProjectChecklist
+                {
+                    ProjectId = id,
+                    StepName = step.StepName,
+                    IsCompleted = false
+                });
+            }
+            await _context.SaveChangesAsync();
+
             return Ok(new { Message = $"{stepTemplates.Count} steps synchronized successfully." });
         }
 
