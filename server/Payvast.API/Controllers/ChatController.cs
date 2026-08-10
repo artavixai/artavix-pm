@@ -10,6 +10,7 @@ using Payvast.API.Models;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using System.Threading.Tasks;
 
 namespace Payvast.API.Controllers
 {
@@ -28,7 +29,7 @@ namespace Payvast.API.Controllers
         }
 
         [HttpGet("channels")]
-        public async System.Threading.Tasks.Task<IActionResult> GetUserChannels()
+        public async Task<IActionResult> GetUserChannels()
         {
             try
             {
@@ -79,8 +80,8 @@ namespace Payvast.API.Controllers
                         directChannels.Add(new
                         {
                             channel.Id,
-                            Name = otherMember?.User.FullName ?? "Deleted User",
-                            AvatarUrl = otherMember?.User.AvatarUrl,
+                            Name = otherMember?.User?.FullName ?? "Deleted User",
+                            AvatarUrl = otherMember?.User?.AvatarUrl,
                             ChannelType = "Direct",
                             UnreadCount = unreadCount
                         });
@@ -97,7 +98,7 @@ namespace Payvast.API.Controllers
         }
 
         [HttpPost("direct")]
-        public async System.Threading.Tasks.Task<IActionResult> GetOrCreateDirectChannel([FromBody] CreateDirectChatDto dto)
+        public async Task<IActionResult> GetOrCreateDirectChannel([FromBody] CreateDirectChatDto dto)
         {
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var otherUserId = dto.OtherUserId;
@@ -141,7 +142,7 @@ namespace Payvast.API.Controllers
         }
 
         [HttpGet("channels/{channelId}/messages")]
-        public async System.Threading.Tasks.Task<IActionResult> GetChannelMessages(int channelId)
+        public async Task<IActionResult> GetChannelMessages(int channelId)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
@@ -150,30 +151,46 @@ namespace Payvast.API.Controllers
 
             if (!isMember) return Forbid();
 
-            var messages = await _context.ChatMessages
+            var rawMessages = await _context.ChatMessages
                 .Include(m => m.Sender)
                 .Include(m => m.ReplyTo)
                 .Where(m => m.ChannelId == channelId)
                 .OrderBy(m => m.SentAt)
-                .Select(m => new
-                {
-                    m.Id,
-                    SenderId = m.Sender.Id,
-                    SenderFullName = m.Sender.FullName,
-                    SenderAvatarUrl = m.Sender.AvatarUrl,
-                    m.Content,
-                    m.SentAt,
-                    m.EditedAt,
-                    m.SeenAt,
-                    ReplyToId = m.ReplyToId,
-                    RepliedContent = m.ReplyTo != null ? m.ReplyTo.Content : null,
-                    Reactions = _context.MessageReactions
-                        .Where(r => r.MessageId == m.Id)
-                        .GroupBy(r => r.Reaction)
-                        .Select(g => new { Reaction = g.Key, Count = g.Count() })
-                        .ToList()
-                })
+                .AsNoTracking()
                 .ToListAsync();
+
+            var messageIds = rawMessages.Select(m => m.Id).ToList();
+
+            var reactionsGrouped = await _context.MessageReactions
+                .Where(r => messageIds.Contains(r.MessageId))
+                .AsNoTracking()
+                .ToListAsync();
+
+            var reactionsDict = reactionsGrouped
+                .GroupBy(r => r.MessageId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.GroupBy(r => r.Reaction)
+                          .Select(rg => new { Reaction = rg.Key, Count = rg.Count() })
+                          .ToList()
+                );
+
+            var messages = rawMessages.Select(m => new
+            {
+                m.Id,
+                SenderId = m.Sender?.Id ?? 0,
+                SenderFullName = m.Sender?.FullName ?? "Unknown User",
+                SenderAvatarUrl = m.Sender?.AvatarUrl,
+                m.Content,
+                m.SentAt,
+                m.EditedAt,
+                m.SeenAt,
+                ReplyToId = m.ReplyToId,
+                RepliedContent = m.ReplyTo?.Content,
+                m.Latitude,
+                m.Longitude,
+                Reactions = reactionsDict.ContainsKey(m.Id) ? reactionsDict[m.Id] : new List<object>()
+            }).ToList();
 
             var unreadEntries = await _context.UnreadMessages
                 .Where(um => um.ChannelId == channelId && um.UserId == userId)
