@@ -16,11 +16,11 @@ namespace Payvast.API.Data
 
                 using (var sqlContext = new ApplicationDbContext(optionsBuilder.Options))
                 {
-                    // Check if local SQL Server is available before touching SQLite
                     if (!sqlContext.Database.CanConnect())
                     {
                         Console.WriteLine("[DataMigrator] Local SQL Server not detected or unreachable. Ensuring SQLite schema exists.");
                         sqliteContext.Database.EnsureCreated();
+                        ShiftDatesToSeptember2026(sqliteContext);
                         return;
                     }
 
@@ -189,14 +189,95 @@ namespace Payvast.API.Data
                     sqliteContext.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
 
                     Console.WriteLine("==================================================");
-                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES & DATA MIGRATED 100% SUCCESSFULLY!");
+                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES MIGRATED. NOW SHIFTING DATES TO SEP 2026...");
                     Console.WriteLine("==================================================");
+
+                    ShiftDatesToSeptember2026(sqliteContext);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[DataMigrator Exception] {ex.Message}");
                 sqliteContext.Database.EnsureCreated();
+                ShiftDatesToSeptember2026(sqliteContext);
+            }
+        }
+
+        public static void ShiftDatesToSeptember2026(ApplicationDbContext sqliteContext)
+        {
+            try
+            {
+                var projects = sqliteContext.Projects.ToList();
+                if (!projects.Any()) return;
+
+                var earliestProjectStart = projects.Where(p => p.StartDate.HasValue).Min(p => p.StartDate);
+                if (!earliestProjectStart.HasValue) return;
+
+                var targetBaseDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+                
+                // If dates are already in or after Sep 2026, no shift needed
+                if (earliestProjectStart.Value >= targetBaseDate)
+                {
+                    Console.WriteLine("[DataMigrator] Dates are already aligned to September 2026 or later.");
+                    return;
+                }
+
+                TimeSpan shiftOffset = targetBaseDate - earliestProjectStart.Value.Date;
+                Console.WriteLine($"[DataMigrator] Shifting all dates by +{shiftOffset.TotalDays} days to start from September 2026...");
+
+                // 1. Shift Projects
+                foreach (var p in projects)
+                {
+                    if (p.StartDate.HasValue) p.StartDate = p.StartDate.Value.Add(shiftOffset);
+                    if (p.EndDate.HasValue) p.EndDate = p.EndDate.Value.Add(shiftOffset);
+                }
+
+                // 2. Shift Tasks
+                var tasks = sqliteContext.Tasks.ToList();
+                foreach (var t in tasks)
+                {
+                    t.StartDate = t.StartDate.Add(shiftOffset);
+                    if (t.DueDate.HasValue) t.DueDate = t.DueDate.Value.Add(shiftOffset);
+                }
+
+                // 3. Shift Meetings
+                var meetings = sqliteContext.Meetings.ToList();
+                foreach (var m in meetings)
+                {
+                    m.StartTime = m.StartTime.Add(shiftOffset);
+                    m.EndTime = m.EndTime.Add(shiftOffset);
+                }
+
+                // 4. Shift WeeklyPlans
+                var plans = sqliteContext.WeeklyPlans.ToList();
+                foreach (var wp in plans)
+                {
+                    wp.PlanDate = wp.PlanDate.Add(shiftOffset);
+                }
+
+                // 5. Shift FollowUps
+                var followUps = sqliteContext.ProjectFollowUps.ToList();
+                foreach (var fu in followUps)
+                {
+                    fu.FollowUpDate = fu.FollowUpDate.Add(shiftOffset);
+                    if (fu.ReminderDate.HasValue) fu.ReminderDate = fu.ReminderDate.Value.Add(shiftOffset);
+                }
+
+                // 6. Shift Notes
+                var notes = sqliteContext.Notes.ToList();
+                foreach (var n in notes)
+                {
+                    if (n.ReminderDate.HasValue) n.ReminderDate = n.ReminderDate.Value.Add(shiftOffset);
+                }
+
+                sqliteContext.SaveChanges();
+                Console.WriteLine("==================================================");
+                Console.WriteLine("✅ [DataMigrator] ALL SYSTEM DATES SHIFTED TO SEPTEMBER 2026 ONWARDS!");
+                Console.WriteLine("==================================================");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DataMigrator Error shifting dates]: {ex.Message}");
             }
         }
     }
