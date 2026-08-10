@@ -37,6 +37,13 @@ export const AuthProvider = ({ children }) => {
       return newState;
     });
   };
+
+  // Request Desktop Notification Permissions on mount
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
   
   const updateTotalUnreadCount = useCallback(async () => {
     try {
@@ -84,9 +91,22 @@ export const AuthProvider = ({ children }) => {
     if (user?.id) {
         const reminderHandler = (reminder) => {
             addNotification(reminder);
+
+            // 1. Play Audio Alarm
             if (isSoundEnabled) {
-                const audio = new Audio('/notification.mp3');
-                audio.play().catch(e => console.error("Audio play error:", e));
+                const audio = new Audio('/alarm.mp3');
+                audio.play().catch(() => {
+                    const fallbackAudio = new Audio('/notification.mp3');
+                    fallbackAudio.play().catch(e => console.error("Audio play blocked by browser:", e));
+                });
+            }
+
+            // 2. Trigger System/Desktop OS Notification if browser is minimized
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(reminder.title || "Artavix PM Reminder", {
+                    body: stripHtml(reminder.content) || "Reminder alert time has arrived.",
+                    icon: "/vite.svg"
+                });
             }
             
             let navigateTo = '/notes';
@@ -102,24 +122,24 @@ export const AuthProvider = ({ children }) => {
             
             toast.custom((t) => (
               <div onClick={() => { navigate(navigateTo, { state: navigateState }); toast.dismiss(t.id); }}
-                className={`${t.visible ? 'animate-slide-in-left' : 'animate-slide-out-left'} max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 cursor-pointer`}>
+                className={`${t.visible ? 'animate-slide-in-left' : 'animate-slide-out-left'} max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 cursor-pointer border border-blue-200`}>
                 <div className="flex-1 w-0 p-4">
                   <div className="flex items-start">
-                    <div className="flex-shrink-0 pt-0.5"><div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white"><BellIcon /></div></div>
+                    <div className="flex-shrink-0 pt-0.5"><div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md"><BellIcon /></div></div>
                     <div className="ml-3 mr-3 flex-1">
-                      <p className="text-sm font-medium text-gray-900">{reminder.title}</p>
-                      <p className="mt-1 text-sm text-gray-500 truncate">{stripHtml(reminder.content) || 'Reminder alert'}</p>
+                      <p className="text-sm font-bold text-slate-800">{reminder.title}</p>
+                      <p className="mt-1 text-xs text-slate-500 truncate">{stripHtml(reminder.content) || 'Reminder alert'}</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center p-2">
                   <button onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }} 
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-red-100 hover:text-red-600">
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                   </button>
                 </div>
               </div>
-            ));
+            ), { duration: 10000 });
         };
 
         if (!chatService.connection || chatService.connection.state === signalR.HubConnectionState.Disconnected) {

@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Payvast.API.Data;
 using Payvast.API.Hubs;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Payvast.API.Services
 {
@@ -13,80 +17,87 @@ namespace Payvast.API.Services
         private readonly IHubContext<ChatHub> _hubContext;
         private readonly ILogger<ReminderService> _logger;
 
-        public ReminderService(IServiceScopeFactory scopeFactory, IHubContext<ChatHub> hubContext, ILogger<ReminderService> logger)
+        public ReminderService(IServiceScopeFactory scopeFactory, IHubContext<ChatHub> hubContext, ILogger<ReminderService> _logger)
         {
             _scopeFactory = scopeFactory;
             _hubContext = hubContext;
-            _logger = logger;
+            this._logger = _logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("ReminderService started.");
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(15));
             return Task.CompletedTask;
         }
 
         private async void DoWork(object state)
         {
-            _logger.LogInformation("ReminderService checking for reminders at: {time}", DateTime.UtcNow);
-
-            using (var scope = _scopeFactory.CreateScope())
+            try
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var now = DateTime.UtcNow;
-
-                // 1. یادآوری‌های یادداشت‌ها (Notes)
-                var noteReminders = await dbContext.Notes
-                    .Where(n => n.ReminderDate.HasValue && !n.ReminderSent &&
-                                n.ReminderDate.Value.AddMinutes(-(n.ReminderOffsetMinutes ?? 0)) <= now)
-                    .ToListAsync();
-
-                // 2. یادآوری‌های پیگیری‌ها (ProjectFollowUps)
-                var followUpReminders = await dbContext.ProjectFollowUps
-                    .Where(f => f.ReminderDate.HasValue && !f.ReminderSent &&
-                                f.ReminderDate.Value <= now && !f.IsResolved)
-                    .ToListAsync();
-
-                if (!noteReminders.Any() && !followUpReminders.Any())
+                using (var scope = _scopeFactory.CreateScope())
                 {
-                    _logger.LogInformation("No reminders to send in this cycle.");
-                    return;
-                }
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var now = DateTime.UtcNow;
 
-                // ارسال یادآوری برای Notes
-                foreach (var note in noteReminders)
-                {
-                    _logger.LogInformation($"Sending reminder for Note ID: {note.Id}, Title: '{note.Title}' to User ID: {note.UserId}");
-                    await _hubContext.Clients.User(note.UserId.ToString()).SendAsync("ReceiveReminder", new
+                    // 1. Note Reminders
+                    var noteReminders = await dbContext.Notes
+                        .Where(n => n.ReminderDate.HasValue && !n.ReminderSent)
+                        .ToListAsync();
+
+                    var dueNotes = noteReminders
+                        .Where(n => n.ReminderDate.Value.AddMinutes(-(n.ReminderOffsetMinutes ?? 0)) <= now)
+                        .ToList();
+
+                    // 2. FollowUp Reminders
+                    var followUpReminders = await dbContext.ProjectFollowUps
+                        .Where(f => f.ReminderDate.HasValue && !f.ReminderSent && !f.IsResolved)
+                        .ToListAsync();
+
+                    var dueFollowUps = followUpReminders
+                        .Where(f => f.ReminderDate.Value <= now)
+                        .ToList();
+
+                    if (!dueNotes.Any() && !dueFollowUps.Any())
                     {
-                        note.Id,
-                        note.Title,
-                        Content = note.Content ?? "زمان یادآوری فرا رسیده است.",
-                        Type = "Note"
-                    });
-                    note.ReminderSent = true;
-                }
+                        return;
+                    }
 
-                // ارسال یادآوری برای ProjectFollowUps
-                foreach (var followUp in followUpReminders)
-                {
-                    var project = await dbContext.Projects.FindAsync(followUp.ProjectId);
-                    var projectTitle = project?.Title ?? "پروژه نامشخص";
-                    _logger.LogInformation($"Sending reminder for FollowUp ID: {followUp.Id}, Project: {projectTitle} to User ID: {followUp.UserId}");
-                    await _hubContext.Clients.User(followUp.UserId.ToString()).SendAsync("ReceiveReminder", new
+                    foreach (var note in dueNotes)
                     {
-                        Id = followUp.Id,
-                        Title = $"پیگیری پروژه {projectTitle}",
-                        Content = followUp.Content,
-                        Type = "FollowUp",
-                        ProjectId = followUp.ProjectId
-                    });
-                    followUp.ReminderSent = true;
-                }
+                        _logger.LogInformation($"[ReminderService] Triggering Note Reminder ID: {note.Id}, Title: '{note.Title}'");
+                        await _hubContext.Clients.User(note.UserId.ToString()).SendAsync("ReceiveReminder", new
+                        {
+                            note.Id,
+                            note.Title,
+                            Content = note.Content ?? "Reminder alert",
+                            Type = "Note"
+                        });
+                        note.ReminderSent = true;
+                    }
 
-                await dbContext.SaveChangesAsync();
-                _logger.LogInformation($"Processed {noteReminders.Count} note reminders and {followUpReminders.Count} follow-up reminders.");
+                    foreach (var followUp in dueFollowUps)
+                    {
+                        var project = await dbContext.Projects.FindAsync(followUp.ProjectId);
+                        var projectTitle = project?.Title ?? "Project";
+                        _logger.LogInformation($"[ReminderService] Triggering FollowUp Reminder ID: {followUp.Id}");
+                        await _hubContext.Clients.User(followUp.UserId.ToString()).SendAsync("ReceiveReminder", new
+                        {
+                            Id = followUp.Id,
+                            Title = $"FollowUp: {projectTitle}",
+                            Content = followUp.Content,
+                            Type = "FollowUp",
+                            ProjectId = followUp.ProjectId
+                        });
+                        followUp.ReminderSent = true;
+                    }
+
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error executing ReminderService cycle");
             }
         }
 
