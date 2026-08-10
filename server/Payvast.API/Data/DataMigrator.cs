@@ -11,18 +11,20 @@ namespace Payvast.API.Data
         {
             try
             {
-                Console.WriteLine("[DataMigrator] Connecting to SQL Server for FULL migration...");
-
                 var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
                 optionsBuilder.UseSqlServer(sqlServerConnStr);
 
                 using (var sqlContext = new ApplicationDbContext(optionsBuilder.Options))
                 {
+                    // Check if local SQL Server is available before touching SQLite
                     if (!sqlContext.Database.CanConnect())
                     {
-                        Console.WriteLine("[DataMigrator Warning] Could not connect to SQL Server. Proceeding with existing SQLite data.");
+                        Console.WriteLine("[DataMigrator] Local SQL Server not detected or unreachable. Ensuring SQLite schema exists.");
+                        sqliteContext.Database.EnsureCreated();
                         return;
                     }
+
+                    Console.WriteLine("[DataMigrator] Connected to local SQL Server. Starting FULL data migration...");
 
                     // Reset SQLite
                     sqliteContext.Database.EnsureDeleted();
@@ -30,8 +32,6 @@ namespace Payvast.API.Data
 
                     // Temporarily disable foreign keys for SQLite migration
                     sqliteContext.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF;");
-
-                    Console.WriteLine("[DataMigrator] SQLite database reset. Copying all tables...");
 
                     // 1. Roles
                     var roles = sqlContext.Roles.AsNoTracking().ToList();
@@ -189,13 +189,14 @@ namespace Payvast.API.Data
                     sqliteContext.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
 
                     Console.WriteLine("==================================================");
-                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES & CHATS MIGRATED 100% SUCCESSFULLY!");
+                    Console.WriteLine("🎉 [DataMigrator] ALL TABLES & DATA MIGRATED 100% SUCCESSFULLY!");
                     Console.WriteLine("==================================================");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[DataMigrator Exception] {ex.Message}");
+                sqliteContext.Database.EnsureCreated();
             }
         }
     }

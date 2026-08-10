@@ -87,7 +87,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
 
-        // Force full migration from SQL Server to SQLite
+        // Safely migrate from SQL Server if reachable, otherwise ensure SQLite schema exists
         string sqlServerConnStr = "Server=.;Database=PayvastProjectDb;User Id=sa;Password=Payvast@123;TrustServerCertificate=True;";
         Payvast.API.Data.DataMigrator.ForceMigrateFromSqlServer(context, sqlServerConnStr);
 
