@@ -171,7 +171,7 @@ namespace Payvast.API.Controllers
                 .ToDictionary(
                     g => g.Key,
                     g => g.GroupBy(r => r.Reaction)
-                          .Select(rg => new { Reaction = rg.Key, Count = rg.Count() })
+                          .Select(rg => (object)new { Reaction = rg.Key, Count = rg.Count() })
                           .ToList()
                 );
 
@@ -189,7 +189,7 @@ namespace Payvast.API.Controllers
                 RepliedContent = m.ReplyTo?.Content,
                 m.Latitude,
                 m.Longitude,
-                Reactions = reactionsDict.ContainsKey(m.Id) ? reactionsDict[m.Id] : new List<object>()
+                Reactions = reactionsDict.TryGetValue(m.Id, out var reactionList) ? reactionList : new List<object>()
             }).ToList();
 
             var unreadEntries = await _context.UnreadMessages
