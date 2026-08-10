@@ -13,7 +13,10 @@ class ChatService {
         }
 
         this.connection = new signalR.HubConnectionBuilder()
-            .withUrl(`${CHAT_HUB_URL}?access_token=${token}`)
+            .withUrl(CHAT_HUB_URL, {
+                accessTokenFactory: () => localStorage.getItem('authToken'),
+                transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+            })
             .withAutomaticReconnect()
             .build();
 
@@ -52,13 +55,13 @@ class ChatService {
 
     markMessagesAsSeen = (channelId) => {
         if (this.connection) {
-            return this.connection.invoke("MarkMessagesAsSeen", channelId);
+            return this.connection.invoke("MarkMessagesAsSeen", Number(channelId));
         }
     }
 
     sendMessage = (channelId, message) => {
         if (this.connection) {
-            return this.connection.invoke("SendMessage", channelId, message);
+            return this.connection.invoke("SendMessage", Number(channelId), message);
         }
     }
 
