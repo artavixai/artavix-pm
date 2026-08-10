@@ -6,7 +6,7 @@ import moment from 'jalali-moment';
 import CustomDatePicker from '../components/common/CustomDatePicker';
 import CustomTextEditor from '../components/common/CustomTextEditor';
 
-const BellIcon = ({ className = "w-4 h-4 mr-1 text-slate-400" }) => <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path></svg>;
+const BellIcon = ({ className = "w-4 h-4 mr-1 text-slate-400" }) => <svg className={className} fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3 3z"></path></svg>;
 const PlusIcon = () => <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"></path></svg>;
 
 const NoteModal = ({ note, isOpen, onClose, onSave }) => {
@@ -24,9 +24,10 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
         setContent(note.content || '');
         setCategory(note.category || 'Personal');
         if (note.reminderDate) {
-          const m = moment(note.reminderDate);
-          setReminderDate(m.isValid() ? m.format('YYYY/MM/DD') : '');
-          setReminderTime(m.isValid() ? m.format('HH:mm') : '09:00');
+          // Convert stored UTC back to local time for exact display
+          const localM = moment.utc(note.reminderDate).local();
+          setReminderDate(localM.isValid() ? localM.format('YYYY/MM/DD') : '');
+          setReminderTime(localM.isValid() ? localM.format('HH:mm') : '09:00');
           setReminderOffset(note.reminderOffsetMinutes ?? 0); 
         } else {
           setReminderDate('');
@@ -50,8 +51,9 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
     let finalReminderDate = null;
     if (reminderDate) {
       const [hour, minute] = reminderTime.split(':').map(Number);
-      const m = moment(reminderDate, 'YYYY/MM/DD').hour(hour || 0).minute(minute || 0).second(0).millisecond(0);
-      finalReminderDate = m.toISOString();
+      // Parse exact local date + time and format as ISO UTC string
+      const localM = moment(`${reminderDate} ${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}`, 'YYYY/MM/DD HH:mm');
+      finalReminderDate = localM.isValid() ? localM.utc().format('YYYY-MM-DDTHH:mm:ss[Z]') : null;
     }
     onSave({ id: note?.id, title, content, category, reminderDate: finalReminderDate, reminderOffsetMinutes: reminderOffset });
   };
@@ -197,7 +199,7 @@ const Notes = () => {
             const style = categoryStyles[note.category] || categoryStyles.default;
             let displayDate;
             if (note.reminderDate) {
-              const reminderMoment = moment(note.reminderDate);
+              const reminderMoment = moment.utc(note.reminderDate).local();
               displayDate = reminderMoment.isValid() ? reminderMoment.format('YYYY/MM/DD - HH:mm') : 'Date Error';
             } else {
               displayDate = moment(note.updatedAt).format('YYYY/MM/DD');
