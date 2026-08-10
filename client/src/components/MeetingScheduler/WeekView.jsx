@@ -1,7 +1,9 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import moment from 'moment';
-import { Motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { formatDigit } from './helpers';
+
+const Motion = motion;
 
 const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
     const startOfWeek = currentDate.clone().startOf('week');
@@ -77,7 +79,7 @@ const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
 
                             if (dayIndex >= 0 && dayIndex < 7) {
                                 return (
-                                    <motion.div
+                                    <Motion.div
                                         key={meeting.id || Math.random()}
                                         className="absolute p-2 rounded-xl text-white text-xs cursor-pointer z-10 overflow-hidden flex flex-col pointer-events-auto shadow-md"
                                         style={{
@@ -91,7 +93,7 @@ const WeekView = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
                                     >
                                         <p className="font-bold text-xs truncate">{meeting.title || 'Meeting'}</p>
                                         <p className="text-[10px] opacity-90 mt-0.5">{formatDigit(`${start.format('HH:mm')} - ${end.format('HH:mm')}`)}</p>
-                                    </motion.div>
+                                    </Motion.div>
                                 );
                             }
                             return null;

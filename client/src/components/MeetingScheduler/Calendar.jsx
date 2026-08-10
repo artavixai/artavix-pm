@@ -1,7 +1,9 @@
 import React from 'react';
 import moment from 'moment';
-import { Motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { WEEKDAYS_SHORT, getMonthDays, formatDigit } from './helpers';
+
+const Motion = motion;
 
 const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
   const weeks = getMonthDays(currentDate);
@@ -27,7 +29,7 @@ const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
           const dayMeetings = safeMeetings.filter(m => m.startTime && moment(m.startTime).isSame(day, 'day'));
 
           return (
-            <motion.div
+            <Motion.div
               key={day.format('YYYY-MM-DD')}
               className={`relative p-2 border-b border-r border-slate-200 flex flex-col group ${
                 isCurrentMonth ? 'bg-white' : 'bg-slate-50/60'
@@ -56,7 +58,7 @@ const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
               
               <div className="flex-grow overflow-y-auto space-y-1 pr-1 scrollbar-flat">
                 {dayMeetings.map((meeting, meetingIndex) => (
-                    <motion.div
+                    <Motion.div
                         key={`${meeting.id || meetingIndex}`}
                         onClick={(e) => {
                             e.stopPropagation();
@@ -67,10 +69,10 @@ const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
                         whileHover={{ scale: 1.03, opacity: 0.9 }}
                     >
                         {meeting.title || 'Meeting'}
-                    </motion.div>
+                    </Motion.div>
                 ))}
               </div>
-            </motion.div>
+            </Motion.div>
           );
         })}
       </div>

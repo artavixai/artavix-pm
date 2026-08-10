@@ -1,7 +1,9 @@
 import React from 'react';
 import moment from 'moment';
-import { Motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { formatDigit } from './helpers';
+
+const Motion = motion;
 
 const DayView = ({ currentDate, meetings, onMeetingClick }) => {
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
@@ -31,7 +33,7 @@ const DayView = ({ currentDate, meetings, onMeetingClick }) => {
 
                     if (start.isSame(currentDate, 'day')) {
                         return (
-                            <motion.div
+                            <Motion.div
                                 key={meeting.id || Math.random()}
                                 className="absolute left-4 right-4 p-3 rounded-2xl text-white text-xs cursor-pointer z-10 overflow-hidden shadow-md"
                                 style={{
@@ -43,7 +45,7 @@ const DayView = ({ currentDate, meetings, onMeetingClick }) => {
                             >
                                 <p className="font-bold text-sm">{meeting.title || 'Meeting'}</p>
                                 <p className="text-xs opacity-90 mt-1">{formatDigit(`${start.format('HH:mm')} - ${end.format('HH:mm')}`)}</p>
-                            </motion.div>
+                            </Motion.div>
                         );
                     }
                     return null;

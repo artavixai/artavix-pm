@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from '../icons';
 import CustomDatePicker from '../common/CustomDatePicker';
 import CustomTextEditor from '../common/CustomTextEditor';
 import moment from 'moment';
 import { userService } from '../../services/apiService';
 import toast from 'react-hot-toast';
+
+const Motion = motion;
 
 const MeetingModal = ({
   isOpen = false,
@@ -103,7 +105,7 @@ const MeetingModal = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -111,7 +113,7 @@ const MeetingModal = ({
           onClick={onClose}
           dir="ltr"
         >
-          <motion.div
+          <Motion.div
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
@@ -208,8 +210,8 @@ const MeetingModal = ({
                 <button onClick={handleSave} className="px-6 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100">Save</button>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </Motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );
