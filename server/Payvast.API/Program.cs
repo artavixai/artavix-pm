@@ -86,11 +86,10 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated();
 
-        // Safely migrate from SQL Server if reachable and shift dates to September 2026 onwards
+        // Safe migration without wiping user data on app restart
         string sqlServerConnStr = "Server=.;Database=PayvastProjectDb;User Id=sa;Password=Payvast@123;TrustServerCertificate=True;";
-        Payvast.API.Data.DataMigrator.ForceMigrateFromSqlServer(context, sqlServerConnStr);
+        Payvast.API.Data.DataMigrator.ForceMigrateFromSqlServerIfEmpty(context, sqlServerConnStr);
 
         DbInitializer.Initialize(context);
     }

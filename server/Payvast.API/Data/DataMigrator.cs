@@ -7,10 +7,22 @@ namespace Payvast.API.Data
 {
     public static class DataMigrator
     {
-        public static void ForceMigrateFromSqlServer(ApplicationDbContext sqliteContext, string sqlServerConnStr)
+        public static void ForceMigrateFromSqlServerIfEmpty(ApplicationDbContext sqliteContext, string sqlServerConnStr)
         {
             try
             {
+                // Ensure SQLite database schema exists without deleting existing user data
+                bool created = sqliteContext.Database.EnsureCreated();
+
+                // If SQLite already contains projects/notes, DO NOT overwrite or delete user data
+                if (sqliteContext.Projects.Any())
+                {
+                    Console.WriteLine("[DataMigrator] SQLite database contains user data. Preserving all records.");
+                    return;
+                }
+
+                Console.WriteLine("[DataMigrator] SQLite database is empty. Attempting one-time migration from SQL Server...");
+
                 var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
                 optionsBuilder.UseSqlServer(sqlServerConnStr);
 
@@ -18,24 +30,16 @@ namespace Payvast.API.Data
                 {
                     if (!sqlContext.Database.CanConnect())
                     {
-                        Console.WriteLine("[DataMigrator] Local SQL Server not detected. Ensuring SQLite schema exists.");
-                        sqliteContext.Database.EnsureCreated();
-                        AlignAllDatesToCurrentMonth(sqliteContext);
+                        Console.WriteLine("[DataMigrator Warning] Local SQL Server not reachable. Proceeding with SQLite schema.");
                         return;
                     }
 
-                    Console.WriteLine("[DataMigrator] Connected to local SQL Server. Starting FULL data migration...");
-
-                    // Reset SQLite
-                    sqliteContext.Database.EnsureDeleted();
-                    sqliteContext.Database.EnsureCreated();
-
-                    // Temporarily disable foreign keys for SQLite migration
+                    // Temporarily disable foreign keys for initial SQLite population
                     sqliteContext.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF;");
 
                     // 1. Roles
                     var roles = sqlContext.Roles.AsNoTracking().ToList();
-                    if (roles.Any())
+                    if (roles.Any() && !sqliteContext.Roles.Any())
                     {
                         sqliteContext.Roles.AddRange(roles);
                         sqliteContext.SaveChanges();
@@ -43,7 +47,7 @@ namespace Payvast.API.Data
 
                     // 2. Users
                     var users = sqlContext.Users.AsNoTracking().ToList();
-                    if (users.Any())
+                    if (users.Any() && !sqliteContext.Users.Any())
                     {
                         sqliteContext.Users.AddRange(users);
                         sqliteContext.SaveChanges();
@@ -51,7 +55,7 @@ namespace Payvast.API.Data
 
                     // 3. UserRoles
                     var userRoles = sqlContext.UserRoles.AsNoTracking().ToList();
-                    if (userRoles.Any())
+                    if (userRoles.Any() && !sqliteContext.UserRoles.Any())
                     {
                         sqliteContext.UserRoles.AddRange(userRoles);
                         sqliteContext.SaveChanges();
@@ -59,21 +63,21 @@ namespace Payvast.API.Data
 
                     // 4. ProductGroups, Subsystems, Templates
                     var productGroups = sqlContext.ProductGroups.Include(pg => pg.Subsystems).AsNoTracking().ToList();
-                    if (productGroups.Any())
+                    if (productGroups.Any() && !sqliteContext.ProductGroups.Any())
                     {
                         sqliteContext.ProductGroups.AddRange(productGroups);
                         sqliteContext.SaveChanges();
                     }
 
                     var stepTemplates = sqlContext.ProjectStepTemplates.AsNoTracking().ToList();
-                    if (stepTemplates.Any())
+                    if (stepTemplates.Any() && !sqliteContext.ProjectStepTemplates.Any())
                     {
                         sqliteContext.ProjectStepTemplates.AddRange(stepTemplates);
                         sqliteContext.SaveChanges();
                     }
 
                     var taskTemplates = sqlContext.TaskTemplates.AsNoTracking().ToList();
-                    if (taskTemplates.Any())
+                    if (taskTemplates.Any() && !sqliteContext.TaskTemplates.Any())
                     {
                         sqliteContext.TaskTemplates.AddRange(taskTemplates);
                         sqliteContext.SaveChanges();
@@ -81,14 +85,14 @@ namespace Payvast.API.Data
 
                     // 5. Form & Report Templates
                     var formTemplates = sqlContext.FormTemplates.Include(f => f.Steps).AsNoTracking().ToList();
-                    if (formTemplates.Any())
+                    if (formTemplates.Any() && !sqliteContext.FormTemplates.Any())
                     {
                         sqliteContext.FormTemplates.AddRange(formTemplates);
                         sqliteContext.SaveChanges();
                     }
 
                     var reportTemplates = sqlContext.ReportTemplates.Include(r => r.Steps).AsNoTracking().ToList();
-                    if (reportTemplates.Any())
+                    if (reportTemplates.Any() && !sqliteContext.ReportTemplates.Any())
                     {
                         sqliteContext.ReportTemplates.AddRange(reportTemplates);
                         sqliteContext.SaveChanges();
@@ -96,14 +100,14 @@ namespace Payvast.API.Data
 
                     // 6. Projects & Checklists
                     var projects = sqlContext.Projects.AsNoTracking().ToList();
-                    if (projects.Any())
+                    if (projects.Any() && !sqliteContext.Projects.Any())
                     {
                         sqliteContext.Projects.AddRange(projects);
                         sqliteContext.SaveChanges();
                     }
 
                     var checklists = sqlContext.ProjectChecklists.AsNoTracking().ToList();
-                    if (checklists.Any())
+                    if (checklists.Any() && !sqliteContext.ProjectChecklists.Any())
                     {
                         sqliteContext.ProjectChecklists.AddRange(checklists);
                         sqliteContext.SaveChanges();
@@ -111,7 +115,7 @@ namespace Payvast.API.Data
 
                     // 7. Tasks
                     var tasks = sqlContext.Tasks.AsNoTracking().ToList();
-                    if (tasks.Any())
+                    if (tasks.Any() && !sqliteContext.Tasks.Any())
                     {
                         sqliteContext.Tasks.AddRange(tasks);
                         sqliteContext.SaveChanges();
@@ -119,7 +123,7 @@ namespace Payvast.API.Data
 
                     // 8. Notes
                     var notes = sqlContext.Notes.AsNoTracking().ToList();
-                    if (notes.Any())
+                    if (notes.Any() && !sqliteContext.Notes.Any())
                     {
                         sqliteContext.Notes.AddRange(notes);
                         sqliteContext.SaveChanges();
@@ -127,28 +131,28 @@ namespace Payvast.API.Data
 
                     // 9. Chat Channels, Members, Messages, Reactions
                     var channels = sqlContext.ChatChannels.AsNoTracking().ToList();
-                    if (channels.Any())
+                    if (channels.Any() && !sqliteContext.ChatChannels.Any())
                     {
                         sqliteContext.ChatChannels.AddRange(channels);
                         sqliteContext.SaveChanges();
                     }
 
                     var chatMembers = sqlContext.ChatChannelMembers.AsNoTracking().ToList();
-                    if (chatMembers.Any())
+                    if (chatMembers.Any() && !sqliteContext.ChatChannelMembers.Any())
                     {
                         sqliteContext.ChatChannelMembers.AddRange(chatMembers);
                         sqliteContext.SaveChanges();
                     }
 
                     var messages = sqlContext.ChatMessages.AsNoTracking().ToList();
-                    if (messages.Any())
+                    if (messages.Any() && !sqliteContext.ChatMessages.Any())
                     {
                         sqliteContext.ChatMessages.AddRange(messages);
                         sqliteContext.SaveChanges();
                     }
 
                     var reactions = sqlContext.MessageReactions.AsNoTracking().ToList();
-                    if (reactions.Any())
+                    if (reactions.Any() && !sqliteContext.MessageReactions.Any())
                     {
                         sqliteContext.MessageReactions.AddRange(reactions);
                         sqliteContext.SaveChanges();
@@ -156,7 +160,7 @@ namespace Payvast.API.Data
 
                     // 10. Meetings
                     var meetings = sqlContext.Meetings.AsNoTracking().ToList();
-                    if (meetings.Any())
+                    if (meetings.Any() && !sqliteContext.Meetings.Any())
                     {
                         sqliteContext.Meetings.AddRange(meetings);
                         sqliteContext.SaveChanges();
@@ -164,14 +168,14 @@ namespace Payvast.API.Data
 
                     // 11. FollowUps & Documents
                     var followUps = sqlContext.ProjectFollowUps.AsNoTracking().ToList();
-                    if (followUps.Any())
+                    if (followUps.Any() && !sqliteContext.ProjectFollowUps.Any())
                     {
                         sqliteContext.ProjectFollowUps.AddRange(followUps);
                         sqliteContext.SaveChanges();
                     }
 
                     var documents = sqlContext.ProjectDocuments.AsNoTracking().ToList();
-                    if (documents.Any())
+                    if (documents.Any() && !sqliteContext.ProjectDocuments.Any())
                     {
                         sqliteContext.ProjectDocuments.AddRange(documents);
                         sqliteContext.SaveChanges();
@@ -179,7 +183,7 @@ namespace Payvast.API.Data
 
                     // 12. Weekly Plans
                     var plans = sqlContext.WeeklyPlans.AsNoTracking().ToList();
-                    if (plans.Any())
+                    if (plans.Any() && !sqliteContext.WeeklyPlans.Any())
                     {
                         sqliteContext.WeeklyPlans.AddRange(plans);
                         sqliteContext.SaveChanges();
@@ -194,7 +198,6 @@ namespace Payvast.API.Data
             {
                 Console.WriteLine($"[DataMigrator Exception] {ex.Message}");
                 sqliteContext.Database.EnsureCreated();
-                AlignAllDatesToCurrentMonth(sqliteContext);
             }
         }
 
@@ -211,7 +214,9 @@ namespace Payvast.API.Data
                 var targetStartDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
                 TimeSpan shiftOffset = targetStartDate - earliestDate.Date;
-                Console.WriteLine($"[DataMigrator] Aligning all dates by {shiftOffset.TotalDays} days to start in current month ({targetStartDate:yyyy/MM})...");
+                if (shiftOffset.TotalDays <= 0) return;
+
+                Console.WriteLine($"[DataMigrator] Aligning all dates by {shiftOffset.TotalDays} days...");
 
                 foreach (var t in tasks)
                 {
@@ -253,7 +258,7 @@ namespace Payvast.API.Data
 
                 sqliteContext.SaveChanges();
                 Console.WriteLine("==================================================");
-                Console.WriteLine("✅ [DataMigrator] ALL DATES PERFECTLY ALIGNED TO CURRENT MONTH (AUGUST 2026)!");
+                Console.WriteLine("✅ [DataMigrator] DATES ALIGNED SUCCESSFULLY!");
                 Console.WriteLine("==================================================");
             }
             catch (Exception ex)
