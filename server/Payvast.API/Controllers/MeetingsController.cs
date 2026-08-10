@@ -25,7 +25,6 @@ namespace Payvast.API.Controllers
             _context = context;
         }
 
-        // GET: api/Meetings?projectId=123&startDate=...&endDate=...
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MeetingDto>>> GetMeetings(
             [FromQuery] int? projectId = null,
@@ -43,7 +42,6 @@ namespace Payvast.API.Controllers
             }
             else if (!isAdmin)
             {
-                // اگر کاربر معمولی است و پروژه مشخص نشده، فقط جلساتی که خودش ایجاد کرده یا در آن شرکت دارد را ببین
                 query = query.Where(m => m.CreatedByUserId == userId);
             }
 
@@ -52,7 +50,6 @@ namespace Payvast.API.Controllers
             if (endDate.HasValue)
                 query = query.Where(m => m.EndTime <= endDate.Value);
 
-            // ابتدا داده‌ها را از دیتابیس واکشی می‌کنیم (بدون تبدیل JSON)
             var meetingsData = await query
                 .Include(m => m.CreatedBy)
                 .OrderBy(m => m.StartTime)
@@ -66,28 +63,38 @@ namespace Payvast.API.Controllers
                     m.Color,
                     m.ProjectId,
                     m.CreatedByUserId,
-                    CreatedByFullName = m.CreatedBy.FullName,
+                    CreatedByFullName = m.CreatedBy != null ? m.CreatedBy.FullName : "System",
                     m.CreatedAt,
                     m.ParticipantsJson
                 })
                 .ToListAsync();
 
-            // تبدیل ParticipantsJson در سمت کلاینت (بعد از مادی‌سازی)
-            var meetings = meetingsData.Select(m => new MeetingDto
-            {
-                Id = m.Id,
-                Title = m.Title,
-                StartTime = m.StartTime,
-                EndTime = m.EndTime,
-                Agenda = m.Agenda,
-                Color = m.Color,
-                ProjectId = m.ProjectId,
-                CreatedByUserId = m.CreatedByUserId,
-                CreatedByFullName = m.CreatedByFullName,
-                CreatedAt = m.CreatedAt,
-                Participants = string.IsNullOrEmpty(m.ParticipantsJson)
-                    ? new List<MeetingParticipantDto>()
-                    : JsonSerializer.Deserialize<List<MeetingParticipantDto>>(m.ParticipantsJson)
+            var meetings = meetingsData.Select(m => {
+                var participantList = new List<MeetingParticipantDto>();
+                if (!string.IsNullOrEmpty(m.ParticipantsJson) && m.ParticipantsJson != "null")
+                {
+                    try {
+                        var deserialized = JsonSerializer.Deserialize<List<MeetingParticipantDto>>(m.ParticipantsJson);
+                        if (deserialized != null) {
+                            participantList = deserialized.Where(p => p != null).ToList();
+                        }
+                    } catch {}
+                }
+
+                return new MeetingDto
+                {
+                    Id = m.Id,
+                    Title = m.Title ?? "Untitled Meeting",
+                    StartTime = m.StartTime,
+                    EndTime = m.EndTime,
+                    Agenda = m.Agenda ?? "",
+                    Color = m.Color ?? "#3b82f6",
+                    ProjectId = m.ProjectId,
+                    CreatedByUserId = m.CreatedByUserId,
+                    CreatedByFullName = m.CreatedByFullName,
+                    CreatedAt = m.CreatedAt,
+                    Participants = participantList
+                };
             }).ToList();
 
             return Ok(meetings);
@@ -102,21 +109,30 @@ namespace Payvast.API.Controllers
 
             if (meeting == null) return NotFound();
 
+            var participantList = new List<MeetingParticipantDto>();
+            if (!string.IsNullOrEmpty(meeting.ParticipantsJson) && meeting.ParticipantsJson != "null")
+            {
+                try {
+                    var deserialized = JsonSerializer.Deserialize<List<MeetingParticipantDto>>(meeting.ParticipantsJson);
+                    if (deserialized != null) {
+                        participantList = deserialized.Where(p => p != null).ToList();
+                    }
+                } catch {}
+            }
+
             return Ok(new MeetingDto
             {
                 Id = meeting.Id,
-                Title = meeting.Title,
+                Title = meeting.Title ?? "Untitled Meeting",
                 StartTime = meeting.StartTime,
                 EndTime = meeting.EndTime,
-                Agenda = meeting.Agenda,
-                Color = meeting.Color,
+                Agenda = meeting.Agenda ?? "",
+                Color = meeting.Color ?? "#3b82f6",
                 ProjectId = meeting.ProjectId,
                 CreatedByUserId = meeting.CreatedByUserId,
-                CreatedByFullName = meeting.CreatedBy?.FullName,
+                CreatedByFullName = meeting.CreatedBy?.FullName ?? "System",
                 CreatedAt = meeting.CreatedAt,
-                Participants = string.IsNullOrEmpty(meeting.ParticipantsJson)
-                    ? new List<MeetingParticipantDto>()
-                    : JsonSerializer.Deserialize<List<MeetingParticipantDto>>(meeting.ParticipantsJson)
+                Participants = participantList
             });
         }
 
@@ -125,17 +141,19 @@ namespace Payvast.API.Controllers
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
+            var validParticipants = (dto.Participants ?? new List<MeetingParticipantDto>()).Where(p => p != null).ToList();
+
             var meeting = new Meeting
             {
-                Title = dto.Title,
+                Title = dto.Title ?? "New Meeting",
                 StartTime = dto.StartTime.ToUniversalTime(),
                 EndTime = dto.EndTime.ToUniversalTime(),
-                Agenda = dto.Agenda,
+                Agenda = dto.Agenda ?? "",
                 Color = dto.Color ?? "#3b82f6",
                 ProjectId = dto.ProjectId,
                 CreatedByUserId = userId,
                 CreatedAt = DateTime.UtcNow,
-                ParticipantsJson = JsonSerializer.Serialize(dto.Participants ?? new List<MeetingParticipantDto>())
+                ParticipantsJson = JsonSerializer.Serialize(validParticipants)
             };
 
             _context.Meetings.Add(meeting);
@@ -151,9 +169,9 @@ namespace Payvast.API.Controllers
                 Color = meeting.Color,
                 ProjectId = meeting.ProjectId,
                 CreatedByUserId = meeting.CreatedByUserId,
-                CreatedByFullName = User.FindFirstValue(ClaimTypes.Name),
+                CreatedByFullName = User.FindFirstValue(ClaimTypes.Name) ?? "Admin",
                 CreatedAt = meeting.CreatedAt,
-                Participants = dto.Participants ?? new List<MeetingParticipantDto>()
+                Participants = validParticipants
             });
         }
 
@@ -167,14 +185,16 @@ namespace Payvast.API.Controllers
             if (meeting.CreatedByUserId != userId && !User.IsInRole("SuperAdmin"))
                 return Forbid();
 
-            meeting.Title = dto.Title;
+            var validParticipants = (dto.Participants ?? new List<MeetingParticipantDto>()).Where(p => p != null).ToList();
+
+            meeting.Title = dto.Title ?? meeting.Title;
             meeting.StartTime = dto.StartTime.ToUniversalTime();
             meeting.EndTime = dto.EndTime.ToUniversalTime();
-            meeting.Agenda = dto.Agenda;
+            meeting.Agenda = dto.Agenda ?? "";
             meeting.Color = dto.Color ?? meeting.Color;
             meeting.ProjectId = dto.ProjectId;
             meeting.UpdatedAt = DateTime.UtcNow;
-            meeting.ParticipantsJson = JsonSerializer.Serialize(dto.Participants ?? new List<MeetingParticipantDto>());
+            meeting.ParticipantsJson = JsonSerializer.Serialize(validParticipants);
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -208,7 +228,7 @@ namespace Payvast.API.Controllers
         public int CreatedByUserId { get; set; }
         public string CreatedByFullName { get; set; }
         public DateTime CreatedAt { get; set; }
-        public List<MeetingParticipantDto> Participants { get; set; }
+        public List<MeetingParticipantDto> Participants { get; set; } = new List<MeetingParticipantDto>();
     }
 
     public class MeetingParticipantDto

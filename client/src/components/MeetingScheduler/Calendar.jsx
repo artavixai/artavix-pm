@@ -1,11 +1,13 @@
 import React from 'react';
 import moment from 'moment';
-import { motion } from 'framer-motion';
+import { Motion } from 'framer-motion';
 import { WEEKDAYS_SHORT, getMonthDays, formatDigit } from './helpers';
 
 const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
   const weeks = getMonthDays(currentDate);
   const today = moment();
+
+  const safeMeetings = (meetings || []).filter(Boolean);
 
   return (
     <div className="flex flex-col flex-grow" dir="ltr">
@@ -22,7 +24,7 @@ const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
           const isCurrentMonth = day.month() === currentDate.month();
           const isToday = day.isSame(today, 'day');
           
-          const dayMeetings = meetings.filter(m => moment(m.startTime).isSame(day, 'day'));
+          const dayMeetings = safeMeetings.filter(m => m.startTime && moment(m.startTime).isSame(day, 'day'));
 
           return (
             <motion.div
@@ -55,7 +57,7 @@ const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
               <div className="flex-grow overflow-y-auto space-y-1 pr-1 scrollbar-flat">
                 {dayMeetings.map((meeting, meetingIndex) => (
                     <motion.div
-                        key={`${meeting.id}-${meetingIndex}`}
+                        key={`${meeting.id || meetingIndex}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onMeetingClick(meeting);
@@ -64,7 +66,7 @@ const Calendar = ({ currentDate, meetings, onDayClick, onMeetingClick }) => {
                         style={{ backgroundColor: meeting.color || '#3b82f6' }}
                         whileHover={{ scale: 1.03, opacity: 0.9 }}
                     >
-                        {meeting.title}
+                        {meeting.title || 'Meeting'}
                     </motion.div>
                 ))}
               </div>

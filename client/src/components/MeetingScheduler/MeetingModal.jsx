@@ -29,7 +29,7 @@ const MeetingModal = ({
     if (isOpen) {
       setLoadingUsers(true);
       userService.getAll().then(res => {
-        setAvailableUsers(res.data || []);
+        setAvailableUsers((res.data || []).filter(Boolean));
       }).catch(err => {
         console.error("Error fetching users:", err);
         toast.error("Error fetching users list");
@@ -41,7 +41,7 @@ const MeetingModal = ({
         setDate(startMoment.isValid() ? startMoment.format('YYYY/MM/DD') : moment().format('YYYY/MM/DD'));
         setStartTime(startMoment.isValid() ? startMoment.format('HH:mm') : '09:00');
         setEndTime(moment(selectedMeeting.endTime).isValid() ? moment(selectedMeeting.endTime).format('HH:mm') : '10:00');
-        setParticipants(selectedMeeting.participants || []);
+        setParticipants((selectedMeeting.participants || []).filter(Boolean));
         setAgenda(selectedMeeting.agenda || '');
       } else {
         setTitle('');
@@ -85,13 +85,13 @@ const MeetingModal = ({
   const handleAddParticipant = (participant) => {
     if (!participant) return;
     const participantName = participant.fullName || participant.name || 'User';
-    if (!participants.some(p => p.id === participant.id)) {
+    if (!participants.some(p => p && p.id === participant.id)) {
       setParticipants(prev => [...prev, { id: participant.id, name: participantName, email: participant.email || '' }]);
     }
   };
 
   const handleRemoveParticipant = (participantId) => {
-    setParticipants(prev => prev.filter(p => p.id !== participantId));
+    setParticipants(prev => prev.filter(p => p && p.id !== participantId));
   };
 
   const getFirstLetter = (name) => {
@@ -148,8 +148,8 @@ const MeetingModal = ({
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-2">Participants</label>
                 <div className="flex flex-wrap gap-2 items-center">
-                  {(participants || []).map(p => (
-                    <div key={p.id} className="flex items-center gap-2 bg-slate-100 rounded-full pl-3 pr-1 py-1 text-xs font-semibold text-slate-700">
+                  {(participants || []).filter(Boolean).map(p => (
+                    <div key={p.id || Math.random()} className="flex items-center gap-2 bg-slate-100 rounded-full pl-3 pr-1 py-1 text-xs font-semibold text-slate-700">
                       <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
                         {getFirstLetter(p.name || p.fullName)}
                       </div>
@@ -167,13 +167,13 @@ const MeetingModal = ({
                       {loadingUsers ? (
                         <div className="p-2 text-center text-slate-400">Loading users...</div>
                       ) : (
-                        (availableUsers || []).map(user => (
+                        (availableUsers || []).filter(Boolean).map(user => (
                           <button 
                             key={user.id} 
                             onClick={() => handleAddParticipant(user)}
                             className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-xl font-semibold text-slate-700 transition-colors"
                           >
-                            {user.fullName || user.username}
+                            {user.fullName || user.username || 'User'}
                           </button>
                         ))
                       )}
