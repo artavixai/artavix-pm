@@ -18,6 +18,23 @@
     box-sizing: border-box;
 }
 
+/* =================================================================== */
+/* === High-DPI Sharp Image Rendering for Avatars System-Wide          === */
+/* =================================================================== */
+img.rounded-full, 
+img[src*="avatar"], 
+img[src*="avatars"], 
+img[src*="ui-avatars"], 
+.profile-img {
+    object-fit: cover !important;
+    object-position: center !important;
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
 :root {
     --bg-color: #f8fafc;
     --persian-blue: #3b82f6;

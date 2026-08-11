@@ -176,7 +176,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {stats?.specialistMonthlyWorkloads?.map((spec) => {
             const currentMonthData = spec.monthlyData?.find(m => m.monthKey === selectedMonthKey) || { EstimatedHours: 0, AllocatedHours: 0, UtilizationPercent: 0 };
-            const avatar = spec.avatarUrl ? `${SERVER_URL}/${spec.avatarUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(spec.fullName)}&background=6366f1&color=fff&size=128`;
+            const avatar = spec.avatarUrl ? `${SERVER_URL}/${spec.avatarUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(spec.fullName)}&background=6366f1&color=fff&size=256&bold=true&font-size=0.45`;
             const util = currentMonthData.utilizationPercent || 0;
             const utilColor = util > 100 ? 'bg-red-500' : util > 70 ? 'bg-emerald-500' : 'bg-amber-500';
 
@@ -191,7 +191,7 @@ const Dashboard = () => {
                     src={avatar}
                     alt={spec.fullName}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md flex-shrink-0"
-                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(spec.fullName)}&background=6366f1&color=fff&size=128`; }}
+                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(spec.fullName)}&background=6366f1&color=fff&size=256&bold=true&font-size=0.45`; }}
                   />
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-slate-800 text-sm truncate">{spec.fullName}</h4>
@@ -313,8 +313,8 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {stats?.topActiveProjects?.map((proj) => {
-            const mgrAvatar = proj.managerAvatar ? `${SERVER_URL}/${proj.managerAvatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(proj.managerName)}&background=random&color=fff`;
-            const assAvatar = proj.assigneeAvatar ? `${SERVER_URL}/${proj.assigneeAvatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(proj.assigneeName)}&background=random&color=fff`;
+            const mgrAvatar = proj.managerAvatar ? `${SERVER_URL}/${proj.managerAvatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(proj.managerName)}&background=random&color=fff&size=256&bold=true&font-size=0.45`;
+            const assAvatar = proj.assigneeAvatar ? `${SERVER_URL}/${proj.assigneeAvatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(proj.assigneeName)}&background=random&color=fff&size=256&bold=true&font-size=0.45`;
 
             return (
               <Link key={proj.id} to={`/projects/${proj.id}`} className="block group">
@@ -371,7 +371,7 @@ const Dashboard = () => {
           <div className="space-y-3">
             {stats?.recentActivities?.length > 0 ? (
               stats.recentActivities.map((act) => {
-                const avatar = act.userAvatarUrl ? `${SERVER_URL}/${act.userAvatarUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(act.userFullName)}&background=random&color=fff`;
+                const avatar = act.userAvatarUrl ? `${SERVER_URL}/${act.userAvatarUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(act.userFullName)}&background=random&color=fff&size=256&bold=true&font-size=0.45`;
 
                 return (
                   <Link key={`${act.type}-${act.id}`} to={`/projects/${act.projectId}`} className="block group">
