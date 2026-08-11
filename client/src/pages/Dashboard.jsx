@@ -78,6 +78,25 @@ const Dashboard = () => {
     return null;
   };
 
+  const renderBadge = (act) => {
+    if (act.type === 'CrmAction') {
+      return <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700 flex-shrink-0">CRM Action</span>;
+    }
+    if (act.type === 'TaskActivity') {
+      return <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700 flex-shrink-0">Task Event</span>;
+    }
+    if (act.type === 'Note') {
+      return <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-purple-100 text-purple-700 flex-shrink-0">Note Log</span>;
+    }
+    return (
+      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold flex-shrink-0 ${
+        act.isResolved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+      }`}>
+        {act.isResolved ? 'Resolved' : 'Pending'}
+      </span>
+    );
+  };
+
   return (
     <div className="p-8 space-y-8 pb-16" dir="ltr">
       {/* Header Section */}
@@ -144,7 +163,7 @@ const Dashboard = () => {
         </Motion.div>
       </div>
 
-      {/* SECTION 1: Multi-Month Specialist Utilization Matrix (با عکس نیروها و فیلتر ماه) */}
+      {/* SECTION 1: Multi-Month Specialist Utilization Matrix */}
       <div className="flat-card rounded-3xl p-6 bg-white border border-slate-100 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-100 pb-4">
           <div>
@@ -363,7 +382,7 @@ const Dashboard = () => {
               <h3 className="font-black text-base text-slate-800 flex items-center gap-2">
                 <span>⚡</span> Live System & CRM Activity Feed
               </h3>
-              <p className="text-slate-400 text-xs mt-0.5">Real-time Specialist Follow-ups and CRM Logs</p>
+              <p className="text-slate-400 text-xs mt-0.5">Real-time Specialist Follow-ups, Tasks, and CRM Logs</p>
             </div>
             <Link to="/monitoring" className="text-xs font-bold text-blue-600 hover:underline">Live Monitoring →</Link>
           </div>
@@ -372,9 +391,10 @@ const Dashboard = () => {
             {stats?.recentActivities?.length > 0 ? (
               stats.recentActivities.map((act) => {
                 const avatar = act.userAvatarUrl ? `${SERVER_URL}/${act.userAvatarUrl}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(act.userFullName)}&background=random&color=fff&size=256&bold=true&font-size=0.45`;
+                const targetLink = act.projectId > 0 ? `/projects/${act.projectId}` : '/notes';
 
                 return (
-                  <Link key={`${act.type}-${act.id}`} to={`/projects/${act.projectId}`} className="block group">
+                  <Link key={`${act.type}-${act.id}`} to={targetLink} className="block group">
                     <div className="p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/50 border border-slate-100 transition-all flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 min-w-0">
                         <img src={avatar} className="w-9 h-9 rounded-full object-cover border border-white shadow-sm flex-shrink-0 mt-0.5" alt="" />
@@ -392,11 +412,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold flex-shrink-0 ${
-                        act.type === 'CrmAction' ? 'bg-indigo-100 text-indigo-700' : (act.isResolved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')
-                      }`}>
-                        {act.type === 'CrmAction' ? 'CRM Action' : (act.isResolved ? 'Resolved' : 'Pending')}
-                      </span>
+                      {renderBadge(act)}
                     </div>
                   </Link>
                 );

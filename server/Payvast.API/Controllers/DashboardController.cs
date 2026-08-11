@@ -97,7 +97,6 @@ namespace Payvast.API.Controllers
             foreach (var user in activeUsers)
             {
                 var userTasks = allGanttTasks.Where(t => t.AssigneeId == user.Id).ToList();
-                if (!userTasks.Any()) continue;
 
                 var monthlyData = new List<MonthlyWorkloadItemDto>();
                 foreach (var mDate in monthsToAnalyze)
@@ -168,12 +167,12 @@ namespace Payvast.API.Controllers
                 })
                 .ToList();
 
-            // ۹. ویجت ترکیب فعالیت‌های اخیر (پیگیری‌های داخلی + اقدامات CRM)
+            // ۹. ویجت جامع فعالیت‌های زنده سیستم (پیگیری‌ها + CRM + تسک‌ها + یادداشت‌ها)
             var recentFollowUps = await _context.ProjectFollowUps
                 .Include(f => f.Project)
                 .Include(f => f.User)
                 .OrderByDescending(f => f.CreatedAt)
-                .Take(3)
+                .Take(5)
                 .AsNoTracking()
                 .Select(f => new RecentActivityDto
                 {
@@ -193,7 +192,7 @@ namespace Payvast.API.Controllers
             var recentCrmActions = await _context.CrmActions
                 .Include(a => a.Project)
                 .OrderByDescending(a => a.ActionDate)
-                .Take(3)
+                .Take(5)
                 .AsNoTracking()
                 .Select(a => new RecentActivityDto
                 {
@@ -210,9 +209,53 @@ namespace Payvast.API.Controllers
                 })
                 .ToListAsync();
 
-            var recentActivities = recentFollowUps.Concat(recentCrmActions)
-                .OrderByDescending(a => a.Date)
+            var recentTasks = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.Assignee)
+                .OrderByDescending(t => t.CreatedAt)
                 .Take(5)
+                .AsNoTracking()
+                .Select(t => new RecentActivityDto
+                {
+                    Id = t.Id,
+                    ProjectId = t.ProjectId,
+                    ProjectTitle = t.Project != null ? t.Project.Title : "Project Task",
+                    Content = $"Task: {t.Title} ({t.Status})",
+                    UserFullName = t.Assignee != null ? t.Assignee.FullName : "System Task",
+                    UserAvatarUrl = t.Assignee != null ? t.Assignee.AvatarUrl : null,
+                    Date = t.CreatedAt,
+                    Type = "TaskActivity",
+                    IsResolved = t.Status == "Done",
+                    Duration = t.EstimatedHours.HasValue ? $"{t.EstimatedHours}h" : null
+                })
+                .ToListAsync();
+
+            var recentNotes = await _context.Notes
+                .Include(n => n.User)
+                .OrderByDescending(n => n.UpdatedAt)
+                .Take(5)
+                .AsNoTracking()
+                .Select(n => new RecentActivityDto
+                {
+                    Id = n.Id,
+                    ProjectId = 0,
+                    ProjectTitle = $"Note: {n.Category}",
+                    Content = n.Title,
+                    UserFullName = n.User != null ? n.User.FullName : "User",
+                    UserAvatarUrl = n.User != null ? n.User.AvatarUrl : null,
+                    Date = n.UpdatedAt,
+                    Type = "Note",
+                    IsResolved = true,
+                    Duration = null
+                })
+                .ToListAsync();
+
+            var recentActivities = recentFollowUps
+                .Concat(recentCrmActions)
+                .Concat(recentTasks)
+                .Concat(recentNotes)
+                .OrderByDescending(a => a.Date)
+                .Take(6)
                 .ToList();
 
             // ۱۰. جلسات پیش‌رو
