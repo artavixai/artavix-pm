@@ -50,6 +50,7 @@ const LoginPage = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                autoComplete="username"
                 placeholder="Enter your username"
                 className="flat-input w-full px-4 py-3 rounded-xl text-sm"
               />
@@ -61,6 +62,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 placeholder="••••••••"
                 className="flat-input w-full px-4 py-3 rounded-xl text-sm"
               />

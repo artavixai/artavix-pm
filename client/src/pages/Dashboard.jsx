@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { dashboardService } from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
-import { Motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import moment from 'jalali-moment';
 import {
@@ -9,6 +9,8 @@ import {
   ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from 'recharts';
 import { SERVER_URL } from '../config';
+
+const Motion = motion;
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -97,7 +99,7 @@ const Dashboard = () => {
 
       {/* Top Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div whileHover={{ y: -4 }} className="flat-card rounded-2xl p-6 bg-gradient-to-br from-blue-50/60 to-indigo-50/20 border-l-4 border-blue-500">
+        <Motion.div whileHover={{ y: -4 }} className="flat-card rounded-2xl p-6 bg-gradient-to-br from-blue-50/60 to-indigo-50/20 border-l-4 border-blue-500">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-200">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h2zm4-3a1 1 0 00-1 1v1h2V4a1 1 0 00-1-1zM7.707 8.707L10 11l4.293-4.293a1 1 0 111.414 1.414L11 12.828a1 1 0 01-1.414 0L6.293 9.535a1 1 0 011.414-1.414z" clipRule="evenodd"></path></svg>
@@ -106,9 +108,9 @@ const Dashboard = () => {
           </div>
           <h3 className="font-bold text-slate-800 text-sm mb-1">Active Projects</h3>
           <p className="text-xs text-slate-400 font-medium">Total Portfolio: {stats?.trackableTasks || 0}</p>
-        </motion.div>
+        </Motion.div>
 
-        <motion.div whileHover={{ y: -4 }} className="flat-card rounded-2xl p-6 bg-gradient-to-br from-purple-50/60 to-violet-50/20 border-l-4 border-purple-500">
+        <Motion.div whileHover={{ y: -4 }} className="flat-card rounded-2xl p-6 bg-gradient-to-br from-purple-50/60 to-violet-50/20 border-l-4 border-purple-500">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-purple-200">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"></path></svg>
@@ -117,9 +119,9 @@ const Dashboard = () => {
           </div>
           <h3 className="font-bold text-slate-800 text-sm mb-1">My Active Tasks</h3>
           <p className="text-xs text-slate-400 font-medium">Due Today: {stats?.todaysTasks || 0}</p>
-        </motion.div>
+        </Motion.div>
 
-        <motion.div whileHover={{ y: -4 }} className="flat-card rounded-2xl p-6 bg-gradient-to-br from-amber-50/60 to-orange-50/20 border-l-4 border-amber-500">
+        <Motion.div whileHover={{ y: -4 }} className="flat-card rounded-2xl p-6 bg-gradient-to-br from-amber-50/60 to-orange-50/20 border-l-4 border-amber-500">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-amber-200">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -128,9 +130,9 @@ const Dashboard = () => {
           </div>
           <h3 className="font-bold text-slate-800 text-sm mb-1">Allocated Hours</h3>
           <p className="text-xs text-slate-400 font-medium">Estimated: {formatHour(stats?.totalEstimatedHours)} hrs</p>
-        </motion.div>
+        </Motion.div>
 
-        <motion.div whileHover={{ y: -4 }} className={`flat-card rounded-2xl p-6 bg-gradient-to-br ${(stats?.criticalProjectsCount || 0) > 0 ? 'from-red-50/60 to-rose-50/20 border-l-4 border-red-500' : 'from-emerald-50/60 to-teal-50/20 border-l-4 border-emerald-500'}`}>
+        <Motion.div whileHover={{ y: -4 }} className={`flat-card rounded-2xl p-6 bg-gradient-to-br ${(stats?.criticalProjectsCount || 0) > 0 ? 'from-red-50/60 to-rose-50/20 border-l-4 border-red-500' : 'from-emerald-50/60 to-teal-50/20 border-l-4 border-emerald-500'}`}>
           <div className="flex items-center justify-between mb-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md ${(stats?.criticalProjectsCount || 0) > 0 ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-200' : 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-200'}`}>
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd"></path></svg>
@@ -139,7 +141,7 @@ const Dashboard = () => {
           </div>
           <h3 className="font-bold text-slate-800 text-sm mb-1">Avg. Portfolio Progress</h3>
           <p className="text-xs text-slate-400 font-medium">Critical Projects: <span className="font-bold text-red-500">{stats?.criticalProjectsCount || 0}</span></p>
-        </motion.div>
+        </Motion.div>
       </div>
 
       {/* SECTION 1: Multi-Month Specialist Utilization Matrix (با عکس نیروها و فیلتر ماه) */}
@@ -179,7 +181,7 @@ const Dashboard = () => {
             const utilColor = util > 100 ? 'bg-red-500' : util > 70 ? 'bg-emerald-500' : 'bg-amber-500';
 
             return (
-              <motion.div
+              <Motion.div
                 key={spec.userId}
                 layout
                 className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all"
@@ -220,7 +222,7 @@ const Dashboard = () => {
                     <span>Daily Cap: {spec.dailyCapacityHours || 9}h</span>
                   </div>
                 </div>
-              </motion.div>
+              </Motion.div>
             );
           })}
         </div>
