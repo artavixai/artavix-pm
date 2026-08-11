@@ -24,7 +24,6 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
         setContent(note.content || '');
         setCategory(note.category || 'Personal');
         if (note.reminderDate) {
-          // Convert stored UTC back to local time for exact display
           const localM = moment.utc(note.reminderDate).local();
           setReminderDate(localM.isValid() ? localM.format('YYYY/MM/DD') : '');
           setReminderTime(localM.isValid() ? localM.format('HH:mm') : '09:00');
@@ -51,7 +50,6 @@ const NoteModal = ({ note, isOpen, onClose, onSave }) => {
     let finalReminderDate = null;
     if (reminderDate) {
       const [hour, minute] = reminderTime.split(':').map(Number);
-      // Parse exact local date + time and format as ISO UTC string
       const localM = moment(`${reminderDate} ${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}`, 'YYYY/MM/DD HH:mm');
       finalReminderDate = localM.isValid() ? localM.utc().format('YYYY-MM-DDTHH:mm:ss[Z]') : null;
     }
@@ -138,7 +136,7 @@ const Notes = () => {
         }
       }
     });
-  }, [location.state]);
+  }, [location.state, location.pathname, navigate]);
 
   const handleOpenModal = (note = null) => {
     setCurrentNote(note);
