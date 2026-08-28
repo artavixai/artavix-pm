@@ -432,12 +432,17 @@ const WeeklyPlanning = () => {
   const lastValidSchedule = useRef([]);
 
   useEffect(() => {
-    if (!isAdmin) return;
     userService
       .getAll()
-      .then((res) => setAllUsers(res.data || []))
+      .then((res) => {
+        const users = res.data || [];
+        setAllUsers(users);
+        if (users.length > 0 && selectedUserId === null) {
+          setSelectedUserId(users[0].id);
+        }
+      })
       .catch(() => {});
-  }, [isAdmin]);
+  }, [selectedUserId]);
 
   const fetchSchedule = useCallback(async () => {
     if (selectedUserId === null) return;
@@ -763,34 +768,31 @@ const WeeklyPlanning = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {isAdmin && (
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedUserId === null ? 'all' : selectedUserId}
-                onChange={handleUserChange}
-                className="flat-input px-4 py-2 rounded-xl text-xs font-bold"
-              >
-                <option value="all">All Specialists</option>
-                {allUsers.map((u) => (
-                  <option key={u.id} value={u.id}>{u.fullName}</option>
-                ))}
-              </select>
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedUserId === null ? '' : selectedUserId}
+              onChange={handleUserChange}
+              className="flat-input px-4 py-2 rounded-xl text-xs font-bold"
+            >
+              {allUsers.map((u) => (
+                <option key={u.id} value={u.id}>{u.fullName}</option>
+              ))}
+            </select>
 
-              {selectedUserId !== null && (
-                <div className="relative w-10 h-10">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md bg-slate-200">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-600 font-bold text-sm">
-                        {selectedUserObj?.fullName?.charAt(0) || '?'}
-                      </div>
-                    )}
-                  </div>
+            {selectedUserId !== null && (
+              <div className="relative w-10 h-10">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md bg-slate-200">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-600 font-bold text-sm">
+                      {selectedUserObj?.fullName?.charAt(0) || '?'}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           <div className="flex rounded-xl overflow-hidden border border-slate-200 p-0.5 bg-slate-100">
             <button

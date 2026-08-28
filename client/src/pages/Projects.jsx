@@ -354,7 +354,7 @@ const ProjectCard = ({ project, onDelete, onAnalyzeAi }) => {
                     <button 
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAnalyzeAi(project); }} 
                         className="bg-indigo-50 text-indigo-600 rounded-full p-1.5 shadow-sm hover:bg-indigo-600 hover:text-white transition-all"
-                        title="تحلیل هوشمند با AI"
+                        title="Analysis AI"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </button>

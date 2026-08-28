@@ -152,19 +152,19 @@ namespace Payvast.API.Controllers
             };
 
             string systemPrompt = @"You are a Senior Enterprise Project Management AI Consultant (Artavix AI PM).
-Your task is to thoroughly analyze the provided project metrics and return a structured JSON response.
+Your task is to thoroughly analyze the provided project metrics and return a structured JSON response in fluent English.
 The JSON MUST follow this exact schema:
 {
   ""healthScore"": <Integer between 0 and 100 representing project health>,
-  ""statusSummary"": ""<A concise 2-sentence executive summary in Persian>"",
-  ""detailedAnalysis"": ""<Comprehensive multi-paragraph analysis in Markdown format covering progress, timeline variance, workload efficiency, and risks in Persian>"",
-  ""criticalBottlenecks"": [""<Bottleneck 1 in Persian>"", ""<Bottleneck 2 in Persian>"", ...],
-  ""recommendedActions"": [""<Action 1 in Persian>"", ""<Action 2 in Persian>"", ...],
+  ""statusSummary"": ""<A concise 2-sentence executive summary in English>"",
+  ""detailedAnalysis"": ""<Comprehensive multi-paragraph analysis in Markdown format covering progress velocity, schedule variance, capacity utilization, and key delivery risks in English>"",
+  ""criticalBottlenecks"": [""<Bottleneck 1 in English>"", ""<Bottleneck 2 in English>"", ...],
+  ""recommendedActions"": [""<Action 1 in English>"", ""<Action 2 in English>"", ...],
   ""predictedDeliveryRisk"": ""<Low | Medium | High | Critical>""
 }
-Only output the raw JSON object.";
+Ensure all textual fields are written in professional English only. Only output the raw JSON object.";
 
-            string userPrompt = $"Analyze this project and generate the executive report:\n\n{JsonSerializer.Serialize(projectSummary, new JsonSerializerOptions { WriteIndented = true })}";
+            string userPrompt = $"Analyze this project and generate the executive strategic report in English:\n\n{JsonSerializer.Serialize(projectSummary, new JsonSerializerOptions { WriteIndented = true })}";
 
             try
             {
@@ -193,7 +193,7 @@ Only output the raw JSON object.";
                     ProjectId = project.Id,
                     ProjectTitle = project.Title,
                     HealthScore = root.TryGetProperty("healthScore", out var hs) ? hs.GetInt32() : (100 - Math.Max(0, 100 - project.Progress)),
-                    StatusSummary = root.TryGetProperty("statusSummary", out var ss) ? ss.GetString() : "Project summary generated.",
+                    StatusSummary = root.TryGetProperty("statusSummary", out var ss) ? ss.GetString() : "Executive project summary generated successfully.",
                     DetailedAnalysis = root.TryGetProperty("detailedAnalysis", out var da) ? da.GetString() : cleanedJson,
                     PredictedDeliveryRisk = root.TryGetProperty("predictedDeliveryRisk", out var pdr) ? pdr.GetString() : "Medium",
                     AnalyzedAt = DateTime.UtcNow
