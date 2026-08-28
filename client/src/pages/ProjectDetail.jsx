@@ -12,6 +12,7 @@ import api from '../services/apiService';
 import { SERVER_URL } from '../config';
 import StepTimeline from '../components/project/StepTimeline';
 import DeliverablesTab from '../components/project/DeliverablesTab';
+import AiProjectAnalysisModal from '../components/project/AiProjectAnalysisModal';
 
 const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -315,6 +316,9 @@ const ProjectDetail = () => {
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
     const { user } = useAuth();
     
+    // AI Analysis State
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
     const [groupedTasks, setGroupedTasks] = useState([]);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
@@ -568,12 +572,28 @@ const ProjectDetail = () => {
             <div className="flat-card rounded-2xl p-5 m-4 mb-0 bg-white flex-shrink-0" style={{ borderTopColor: project.color || '#3b82f6', borderTopWidth: '6px', borderTopStyle: 'solid' }}>
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-xl font-black text-slate-800">{project.title}</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-xl font-black text-slate-800">{project.title}</h1>
+                            <button
+                                onClick={() => setIsAiModalOpen(true)}
+                                className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs hover:shadow-lg transition-all flex items-center gap-1.5 shadow-indigo-100"
+                            >
+                                <span>⚡</span> تحلیل هوشمند با AI
+                            </button>
+                        </div>
                         <p className="text-slate-500 mt-1 text-xs">{project.description || 'No description provided.'}</p>
                         {project.customStatus && (<span className="inline-block mt-2 bg-purple-100 text-purple-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">Custom Status: {project.customStatus}</span>)}
                         {project.blockedBy && (<div className="mt-1 text-red-600 text-xs font-bold">⛔ Administrative Block - {project.blockedBy}: {project.blockedReason}</div>)}
                     </div>
-                    <span className="px-3 py-1 rounded-xl text-xs font-bold bg-blue-100 text-blue-700 shadow-sm">{project.status}</span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => { setEditingProject(project); setIsModalOpen(true); }}
+                            className="flat-button px-3 py-1 text-xs font-bold text-slate-700 hover:text-blue-600"
+                        >
+                            ✏️ Edit Project
+                        </button>
+                        <span className="px-3 py-1 rounded-xl text-xs font-bold bg-blue-100 text-blue-700 shadow-sm">{project.status}</span>
+                    </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 border-t pt-3 text-xs">
                     <div><strong className="block text-slate-400">CRM Code:</strong> <span className="text-slate-800 font-bold">{project.crmCode}</span></div>
@@ -749,6 +769,13 @@ const ProjectDetail = () => {
             <NewTaskKanbanModal isOpen={isTaskModalOpen} onClose={() => { setIsTaskModalOpen(false); setEditingTask(null); setDefaultChecklistStepId(null); }} onSaveTask={handleSaveTask} taskToEdit={editingTask} projectId={parseInt(projectId)} defaultChecklistStepId={defaultChecklistStepId} />
             <ConfirmModal isOpen={deleteSubProjectModal.isOpen} onClose={() => setDeleteSubProjectModal({ isOpen: false, projectId: null, projectTitle: '' })} onConfirm={handleDeleteSubProject} title="Delete Sub-Project" message={`Are you sure you want to delete sub-project "${deleteSubProjectModal.projectTitle}"?`} confirmText="Delete" type="danger" />
             <ConfirmModal isOpen={deleteFollowUpModal.isOpen} onClose={() => setDeleteFollowUpModal({ isOpen: false, id: null, content: '' })} onConfirm={handleDeleteFollowUp} title="Delete Follow-Up" message="Are you sure you want to delete this follow-up note?" confirmText="Delete" type="danger" />
+            
+            <AiProjectAnalysisModal
+                isOpen={isAiModalOpen}
+                onClose={() => setIsAiModalOpen(false)}
+                projectId={parseInt(projectId)}
+                projectTitle={project.title}
+            />
         </div>
     );
 };

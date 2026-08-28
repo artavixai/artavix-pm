@@ -34,6 +34,7 @@ export const projectService = {
   getById: (id) => api.get(`/Projects/${id}`),
   getAllFlat: () => api.get('/Projects/flat'),
   create: (projectData) => api.post('/Projects', projectData),
+  update: (id, projectData) => api.put(`/Projects/${id}`, projectData),
   delete: (id) => api.delete(`/Projects/${id}`),
   batchCreateSubProjects: (data) => api.post('/Projects/batch-create-subprojects', data),
   updateChecklist: (projectId, data) => api.put(`/Projects/${projectId}/checklist`, data),
@@ -196,6 +197,13 @@ export const meetingService = {
   create: (data) => api.post('/Meetings', data),
   update: (id, data) => api.put(`/Meetings/${id}`, data),
   delete: (id) => api.delete(`/Meetings/${id}`),
+};
+
+export const aiService = {
+  getSettings: () => api.get('/Ai/settings'),
+  updateSettings: (data) => api.put('/Ai/settings', data),
+  testConnection: (data) => api.post('/Ai/test-connection', data),
+  analyzeProject: (projectId) => api.post(`/Ai/analyze-project/${projectId}`),
 };
 
 export default api;

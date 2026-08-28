@@ -8,6 +8,7 @@ import JalaliDatePickerCustom from '../components/common/CustomDatePicker';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/common/ConfirmModal';
 import FormSelectionModal from '../components/common/FormSelectionModal';
+import AiProjectAnalysisModal from '../components/project/AiProjectAnalysisModal';
 
 const PROJECT_COLORS = [
   { name: 'System Blue', value: '#3b82f6' },
@@ -344,39 +345,59 @@ export const ProjectModal = ({ project, allProjects, parentProject, isOpen, onCl
   );
 };
 
-const ProjectCard = ({ project, onDelete }) => {
+const ProjectCard = ({ project, onDelete, onAnalyzeAi }) => {
     const themeColor = project.color || '#64748b';
     return (
-        <Link to={`/projects/${project.id}`} className="block" dir="ltr">
-            <div className="flat-card rounded-2xl p-5 bg-white flex flex-col h-full group relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1" style={{ borderTop: `6px solid ${themeColor}` }}>
-                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(project.id); }} className="absolute top-3 right-3 bg-red-50 text-red-500 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white z-10"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-                <div className="flex justify-between items-start mb-3 pr-6">
-                    <h3 className="font-bold text-slate-800 text-base truncate max-w-[70%]">{project.title}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 whitespace-nowrap">{project.status}</span>
+        <div className="block group relative" dir="ltr">
+            <div className="flat-card rounded-2xl p-5 bg-white flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1" style={{ borderTop: `6px solid ${themeColor}` }}>
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                    <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAnalyzeAi(project); }} 
+                        className="bg-indigo-50 text-indigo-600 rounded-full p-1.5 shadow-sm hover:bg-indigo-600 hover:text-white transition-all"
+                        title="تحلیل هوشمند با AI"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </button>
+                    <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(project.id); }} 
+                        className="bg-red-50 text-red-500 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                        title="حذف پروژه"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: themeColor }}></div>
-                    <p className="text-xs text-slate-500 font-medium">CRM Code: {project.crmCode}</p>
-                </div>
-                <div className="space-y-1 mb-4">
-                    <div className="flex justify-between text-xs text-slate-400 font-medium"><span>Progress</span><span>{project.progress}%</span></div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5"><div className="h-1.5 rounded-full transition-all" style={{ width: `${project.progress}%`, backgroundColor: themeColor }}></div></div>
-                </div>
-                <div className="border-t pt-3 mt-auto">
-                    {project.subProjects && project.subProjects.length > 0 ? (
-                        <div>
-                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sub-Projects ({project.subProjects.length}):</h4>
-                            <div className="flex flex-wrap gap-1.5">
-                                {project.subProjects.slice(0, 3).map(sub => (
-                                    <span key={sub.id} className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200 text-[10px] font-medium">{sub.title}</span>
-                                ))}
-                                {project.subProjects.length > 3 && <span className="text-[10px] text-slate-400 font-bold">+{project.subProjects.length - 3}</span>}
-                            </div>
+
+                <Link to={`/projects/${project.id}`} className="block flex-1">
+                    <div className="flex justify-between items-start mb-3 pr-16">
+                        <h3 className="font-bold text-slate-800 text-base truncate max-w-[80%]">{project.title}</h3>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: themeColor }}></div>
+                            <p className="text-xs text-slate-500 font-medium">CRM Code: {project.crmCode}</p>
                         </div>
-                    ) : ( <p className="text-center text-[10px] text-slate-400 py-1 font-medium">No Sub-projects</p> )}
-                </div>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 whitespace-nowrap">{project.status}</span>
+                    </div>
+                    <div className="space-y-1 mb-4">
+                        <div className="flex justify-between text-xs text-slate-400 font-medium"><span>Progress</span><span>{project.progress}%</span></div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5"><div className="h-1.5 rounded-full transition-all" style={{ width: `${project.progress}%`, backgroundColor: themeColor }}></div></div>
+                    </div>
+                    <div className="border-t pt-3 mt-auto">
+                        {project.subProjects && project.subProjects.length > 0 ? (
+                            <div>
+                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sub-Projects ({project.subProjects.length}):</h4>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {project.subProjects.slice(0, 3).map(sub => (
+                                        <span key={sub.id} className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200 text-[10px] font-medium">{sub.title}</span>
+                                    ))}
+                                    {project.subProjects.length > 3 && <span className="text-[10px] text-slate-400 font-bold">+{project.subProjects.length - 3}</span>}
+                                </div>
+                            </div>
+                        ) : ( <p className="text-center text-[10px] text-slate-400 py-1 font-medium">No Sub-projects</p> )}
+                    </div>
+                </Link>
             </div>
-        </Link>
+        </div>
     );
 };
 
@@ -390,6 +411,9 @@ const Projects = () => {
     const [isFormSelectionModalOpen, setIsFormSelectionModalOpen] = useState(false);
     const [newlyCreatedProject, setNewlyCreatedProject] = useState(null);
     
+    // AI Analysis State
+    const [aiModal, setAiModal] = useState({ isOpen: false, projectId: null, projectTitle: '' });
+
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
 
@@ -450,6 +474,10 @@ const Projects = () => {
         }
     };
 
+    const handleOpenAiAnalysis = (project) => {
+        setAiModal({ isOpen: true, projectId: project.id, projectTitle: project.title });
+    };
+
     if (loading) return <div className="p-8 font-medium text-slate-500 text-sm" dir="ltr">Loading projects portfolio...</div>;
 
     return (
@@ -458,7 +486,7 @@ const Projects = () => {
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-2xl font-black text-slate-800">Projects Portfolio</h1>
-                        <p className="mt-1 text-slate-500 text-sm font-medium">Manage parent projects and enterprise WBS hierarchy</p>
+                        <p className="mt-1 text-slate-500 text-sm font-medium">Manage parent projects, enterprise WBS hierarchy, and AI-driven insights</p>
                     </div>
                     <button onClick={() => { setEditingProject(null); setIsModalOpen(true); }} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:shadow-lg transition-all flex items-center space-x-2 text-sm shadow-blue-200">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
@@ -496,7 +524,14 @@ const Projects = () => {
             <div className="flex-1 overflow-y-auto px-8 pb-12 scrollbar-flat">
                 {filteredProjects.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProjects.map(project => <ProjectCard key={project.id} project={project} onDelete={(id) => setDeleteModal({ isOpen: true, projectId: id })} />)}
+                        {filteredProjects.map(project => (
+                            <ProjectCard 
+                                key={project.id} 
+                                project={project} 
+                                onDelete={(id) => setDeleteModal({ isOpen: true, projectId: id })} 
+                                onAnalyzeAi={handleOpenAiAnalysis}
+                            />
+                        ))}
                     </div>
                 ) : (
                     <div className="flat-card rounded-2xl p-16 text-center bg-white border-2 border-dashed">
@@ -509,6 +544,13 @@ const Projects = () => {
             <ProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveProject} allProjects={flatProjects} project={editingProject} />
             <FormSelectionModal isOpen={isFormSelectionModalOpen} onClose={() => setIsFormSelectionModalOpen(false)} onConfirm={fetchData} projectId={newlyCreatedProject?.id} projectTitle={newlyCreatedProject?.title} crmCode={newlyCreatedProject?.crmCode} projectAssigneeId={newlyCreatedProject?.projectAssigneeId || newlyCreatedProject?.projectManagerId} />
             <ConfirmModal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, projectId: null })} onConfirm={handleDeleteProject} title="Delete Project" message="Are you sure you want to delete this project and all its sub-projects?" confirmText="Delete Project" type="danger" />
+            
+            <AiProjectAnalysisModal 
+                isOpen={aiModal.isOpen} 
+                onClose={() => setAiModal({ isOpen: false, projectId: null, projectTitle: '' })} 
+                projectId={aiModal.projectId} 
+                projectTitle={aiModal.projectTitle} 
+            />
         </div>
     );
 };

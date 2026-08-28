@@ -5,6 +5,7 @@ import TaskTemplateManager from '../components/settings/TaskTemplateManager';
 import StepTemplateManager from '../components/settings/StepTemplateManager';
 import FormTemplateManager from '../components/settings/FormTemplateManager';
 import ReportTemplateManager from '../components/settings/ReportTemplateManager';
+import AiSettingsManager from '../components/settings/AiSettingsManager';
 import toast from 'react-hot-toast';
 import { SERVER_URL } from '../config';
 
@@ -14,6 +15,7 @@ const DisplayIcon = (props) => <svg className="w-5 h-5 mr-2" fill="currentColor"
 const DatabaseIcon = (props) => <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" {...props}><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path></svg>;
 const CameraIcon = (props) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>;
 const CapacityIcon = (props) => <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>;
+const SparklesIcon = (props) => <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
 
 const UserModal = ({ user, allRoles, isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState({});
@@ -610,6 +612,7 @@ const Settings = () => {
             case 'stepTemplates': return <StepTemplateManager />;
             case 'formTemplates': return <FormTemplateManager />;
             case 'reportTemplates': return <ReportTemplateManager />;
+            case 'groqAi': return <AiSettingsManager />;
             case 'actionDisplay': return <ActionDisplaySettingsTab />;
             case 'hashtagRules': return <HashtagRulesTab />;
             case 'display': return <DisplaySettingsTab />;
@@ -622,7 +625,7 @@ const Settings = () => {
         <div className="p-8" dir="ltr">
             <div className="mb-8">
                 <h1 className="text-2xl font-black text-slate-800">System Settings</h1>
-                <p className="mt-1 text-slate-500 text-xs font-medium">Manage user accounts, roles, process templates, and system configurations</p>
+                <p className="mt-1 text-slate-500 text-xs font-medium">Manage user accounts, roles, process templates, Groq AI engine, and system configurations</p>
             </div>
             <div className="flex space-x-2 border-b border-slate-200 flex-wrap gap-y-2">
                 <button onClick={() => setActiveTab('users')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><UserIcon /> Users</button>
@@ -631,6 +634,7 @@ const Settings = () => {
                 <button onClick={() => setActiveTab('stepTemplates')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'stepTemplates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DatabaseIcon /> Project Steps</button>
                 <button onClick={() => setActiveTab('formTemplates')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'formTemplates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DatabaseIcon /> Forms & Processes</button>
                 <button onClick={() => setActiveTab('reportTemplates')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'reportTemplates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DatabaseIcon /> General Reports</button>
+                <button onClick={() => setActiveTab('groqAi')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'groqAi' ? 'border-indigo-600 text-indigo-600 font-extrabold bg-indigo-50/50 rounded-t-xl' : 'border-transparent text-indigo-500 font-semibold'}`}><SparklesIcon className="text-indigo-600" /> Groq AI Config</button>
                 <button onClick={() => setActiveTab('actionDisplay')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'actionDisplay' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DisplayIcon /> CRM Display</button>
                 <button onClick={() => setActiveTab('hashtagRules')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'hashtagRules' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><RoleIcon /> Hashtags</button>
                 <button onClick={() => setActiveTab('display')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'display' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DisplayIcon /> Sound Settings</button>

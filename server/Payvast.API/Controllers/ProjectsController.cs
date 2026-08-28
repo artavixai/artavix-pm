@@ -278,6 +278,60 @@ namespace Payvast.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] CreateProjectDto dto)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var project = await _context.Projects.FindAsync(id);
+            if (project == null) return NotFound("Project not found.");
+
+            project.Title = dto.Title ?? project.Title;
+            project.CrmCode = dto.CrmCode ?? project.CrmCode;
+            project.BuyerName = dto.BuyerName ?? project.BuyerName;
+            project.Status = dto.Status ?? project.Status;
+            project.CustomStatus = dto.CustomStatus ?? project.CustomStatus;
+            project.ProductGroup = dto.ProductGroup ?? project.ProductGroup;
+            project.ProjectStage = dto.ProjectStage ?? project.ProjectStage;
+            project.Complexity = dto.Complexity ?? project.Complexity;
+            project.StartDate = dto.StartDate ?? project.StartDate;
+            project.EndDate = dto.EndDate ?? project.EndDate;
+            project.Credit = dto.Credit ?? project.Credit;
+            project.CommittedHours = dto.CommittedHours ?? project.CommittedHours;
+            project.Description = dto.Description ?? project.Description;
+            project.Color = dto.Color ?? project.Color;
+            project.LastEditorId = userId;
+
+            if (dto.ProjectManagerId.HasValue)
+                project.ProjectManagerId = dto.ProjectManagerId.Value;
+            if (dto.ProjectAssigneeId.HasValue)
+                project.ProjectAssigneeId = dto.ProjectAssigneeId.Value;
+            if (dto.Weight.HasValue)
+                project.Weight = dto.Weight.Value;
+
+            await _context.SaveChangesAsync();
+
+            if (project.ParentProjectId.HasValue)
+            {
+                var parent = await _context.Projects.Include(p => p.SubProjects).FirstOrDefaultAsync(p => p.Id == project.ParentProjectId.Value);
+                if (parent != null && parent.SubProjects.Any())
+                {
+                    int totalWeight = parent.SubProjects.Sum(sp => sp.Weight ?? 0);
+                    if (totalWeight > 0)
+                    {
+                        var weightedSum = parent.SubProjects.Sum(sp => sp.Progress * (sp.Weight ?? 0));
+                        parent.Progress = weightedSum / totalWeight;
+                    }
+                    else
+                    {
+                        parent.Progress = (int)parent.SubProjects.Average(sp => sp.Progress);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            return Ok(project);
+        }
+
         private async Task ApplyDefaultTemplate(int subProjectId, string templateName, int userId)
         {
             var formTemplate = await _context.FormTemplates.Include(f => f.Steps).FirstOrDefaultAsync(f => f.Name == templateName);

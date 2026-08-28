@@ -14,6 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Register Core Services
 builder.Services.AddSingleton<PresenceTracker>();
+builder.Services.AddHttpClient<GroqAiService>();
+builder.Services.AddScoped<GroqAiService>();
 builder.Services.AddScoped<CrmScraperService>();
 builder.Services.AddHostedService<ReminderService>();
 builder.Services.AddHostedService<CrmBackgroundWorker>();
