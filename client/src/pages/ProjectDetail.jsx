@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { projectService, crmService, followUpService, taskService, userService } from '../services/apiService';
 import { ProjectModal } from './Projects';
@@ -205,7 +205,7 @@ const DocumentsTab = ({ projectId }) => {
     const [description, setDescription] = useState('');
     const { user } = useAuth();
 
-    const fetchDocuments = async () => {
+    const fetchDocuments = useCallback(async () => {
         try {
             const res = await api.get(`/projects/${projectId}/documents`);
             setDocuments(res.data);
@@ -215,9 +215,9 @@ const DocumentsTab = ({ projectId }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId]);
 
-    useEffect(() => { fetchDocuments(); }, [projectId]);
+    useEffect(() => { fetchDocuments(); }, [fetchDocuments]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -236,7 +236,12 @@ const DocumentsTab = ({ projectId }) => {
             setSelectedFile(null);
             setDescription('');
             fetchDocuments();
-        } catch (err) { toast.error("Error uploading file"); } finally { setUploading(false); }
+        } catch (err) { 
+            console.error(err);
+            toast.error("Error uploading file"); 
+        } finally { 
+            setUploading(false); 
+        }
     };
 
     const handleDownload = async (doc) => {
@@ -250,7 +255,10 @@ const DocumentsTab = ({ projectId }) => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-        } catch (err) { toast.error("Error downloading file"); }
+        } catch (err) { 
+            console.error(err);
+            toast.error("Error downloading file"); 
+        }
     };
 
     const handleDelete = async (docId) => {
@@ -259,7 +267,10 @@ const DocumentsTab = ({ projectId }) => {
             await api.delete(`/projects/${projectId}/documents/${docId}`);
             toast.success("Document deleted.");
             fetchDocuments();
-        } catch (err) { toast.error("Error deleting file"); }
+        } catch (err) { 
+            console.error(err);
+            toast.error("Error deleting file"); 
+        }
     };
 
     if (loading) return <div className="text-center py-8 text-slate-500 text-sm">Loading documents...</div>;
@@ -333,7 +344,7 @@ const ProjectDetail = () => {
 
     const isSubProject = !!project?.parentProjectId;
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!projectId) return;
         try {
             setLoading(true);
@@ -347,27 +358,28 @@ const ProjectDetail = () => {
             setUsersList(usersRes.data);
             setProjectAssigneeId(detailRes.data.projectAssigneeId);
         } catch (error) {
+            console.error(error);
             toast.error("Error fetching project details.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId]);
 
-    const fetchActions = async () => {
+    const fetchActions = useCallback(async () => {
         try {
             const res = await crmService.getProjectActions(projectId);
             setActions(res.data);
         } catch (error) { console.error("Failed to fetch actions", error); }
-    };
+    }, [projectId]);
 
-    const fetchFollowUps = async () => {
+    const fetchFollowUps = useCallback(async () => {
         try {
             const res = await followUpService.getByProject(projectId);
             setFollowUps(res.data);
         } catch (error) { console.error("Failed to fetch follow-ups", error); }
-    };
+    }, [projectId]);
 
-    const fetchGroupedTasks = async () => {
+    const fetchGroupedTasks = useCallback(async () => {
         try {
             const res = await taskService.getTasksGroupedByChecklist(projectId);
             setGroupedTasks(res.data);
@@ -375,7 +387,7 @@ const ProjectDetail = () => {
             console.error("Failed to fetch grouped tasks:", error);
             toast.error("Error fetching project steps.");
         }
-    };
+    }, [projectId]);
 
     const handleSyncSteps = async () => {
         if (!project?.productGroup) {
@@ -406,6 +418,7 @@ const ProjectDetail = () => {
             await fetchData();
             toast.success("CRM actions updated.", { id: toastId });
         } catch (error) {
+            console.error(error);
             toast.error("Error syncing with CRM.", { id: toastId });
         } finally {
             setIsSyncing(false);
@@ -466,7 +479,7 @@ const ProjectDetail = () => {
         fetchFollowUps();
         fetchGroupedTasks();
         if (location.state?.activeTab) setActiveTab(location.state.activeTab);
-    }, [projectId, location.state]);
+    }, [fetchData, fetchActions, fetchFollowUps, fetchGroupedTasks, location.state]);
 
     useEffect(() => {
         if (project) {
@@ -488,6 +501,7 @@ const ProjectDetail = () => {
             setEditingProject(null);
             fetchData();
         } catch (error) { 
+            console.error(error);
             toast.error("Operation failed."); 
         }
     };
@@ -504,7 +518,10 @@ const ProjectDetail = () => {
             setIsFollowUpModalOpen(false);
             setEditingFollowUp(null);
             fetchFollowUps();
-        } catch (error) { toast.error("Error saving follow-up."); }
+        } catch (error) { 
+            console.error(error);
+            toast.error("Error saving follow-up."); 
+        }
     };
 
     const confirmDeleteFollowUp = (id, content) => setDeleteFollowUpModal({ isOpen: true, id, content });
@@ -513,7 +530,12 @@ const ProjectDetail = () => {
             await followUpService.delete(deleteFollowUpModal.id);
             toast.success("Follow-up deleted.");
             fetchFollowUps();
-        } catch (error) { toast.error("Error deleting."); } finally { setDeleteFollowUpModal({ isOpen: false, id: null, content: '' }); }
+        } catch (error) { 
+            console.error(error);
+            toast.error("Error deleting."); 
+        } finally { 
+            setDeleteFollowUpModal({ isOpen: false, id: null, content: '' }); 
+        }
     };
 
     const confirmDeleteSubProject = (id, title) => setDeleteSubProjectModal({ isOpen: true, projectId: id, projectTitle: title });
@@ -522,7 +544,12 @@ const ProjectDetail = () => {
             await projectService.delete(deleteSubProjectModal.projectId);
             toast.success(`Sub-project "${deleteSubProjectModal.projectTitle}" deleted.`);
             fetchData();
-        } catch (error) { toast.error("Error deleting sub-project."); } finally { setDeleteSubProjectModal({ isOpen: false, projectId: null, projectTitle: '' }); }
+        } catch (error) { 
+            console.error(error);
+            toast.error("Error deleting sub-project."); 
+        } finally { 
+            setDeleteSubProjectModal({ isOpen: false, projectId: null, projectTitle: '' }); 
+        }
     };
 
     const handleActionDoubleClick = (action) => {
@@ -543,6 +570,7 @@ const ProjectDetail = () => {
             await fetchGroupedTasks();
             return true;
         } catch (error) {
+            console.error(error);
             toast.error("Error saving task.");
             return false;
         }
@@ -578,7 +606,7 @@ const ProjectDetail = () => {
                                 onClick={() => setIsAiModalOpen(true)}
                                 className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs hover:shadow-lg transition-all flex items-center gap-1.5 shadow-indigo-100"
                             >
-                                <span>⚡</span> تحلیل هوشمند با AI
+                                <span>⚡</span> AI Analysis
                             </button>
                         </div>
                         <p className="text-slate-500 mt-1 text-xs">{project.description || 'No description provided.'}</p>
