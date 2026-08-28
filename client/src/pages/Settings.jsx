@@ -15,7 +15,7 @@ const DisplayIcon = (props) => <svg className="w-5 h-5 mr-2" fill="currentColor"
 const DatabaseIcon = (props) => <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" {...props}><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path></svg>;
 const CameraIcon = (props) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>;
 const CapacityIcon = (props) => <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>;
-const SparklesIcon = (props) => <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
+const AiIcon = (props) => <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" {...props}><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14H8a4 4 0 01-.82-7.915 4.962 4.962 0 011.64-1.042 5 5 0 016.36 6.36A4 4 0 0112 14z" /></svg>;
 
 const UserModal = ({ user, allRoles, isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState({});
@@ -157,8 +157,12 @@ const UsersTab = () => {
             const [usersRes, rolesRes] = await Promise.all([userService.getAll(), roleService.getAll()]);
             setUsers(usersRes.data);
             setAllRoles(rolesRes.data);
-        } catch (error) { toast.error("Error fetching users data."); }
-        finally { setLoading(false); }
+        } catch (error) { 
+            console.error(error);
+            toast.error("Error fetching users data."); 
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
@@ -186,6 +190,7 @@ const UsersTab = () => {
             setModalState({ isOpen: false, user: null });
             fetchData();
         } catch (error) {
+            console.error(error);
             toast.error("Operation failed.");
         }
     };
@@ -196,8 +201,9 @@ const UsersTab = () => {
                 await userService.delete(user.id);
                 toast.success(`User ${user.fullName} deactivated.`);
                 fetchData();
-            } catch(error) {
-                 toast.error("Failed to delete user.");
+            } catch (error) {
+                console.error(error);
+                toast.error("Failed to delete user.");
             }
         }
     };
@@ -275,6 +281,7 @@ const UserCapacityTab = () => {
             const res = await userService.getAll();
             setUsers(res.data);
         } catch (err) {
+            console.error(err);
             toast.error("Error fetching users list");
         } finally {
             setLoading(false);
@@ -298,6 +305,7 @@ const UserCapacityTab = () => {
             });
             toast.success(`Capacity for ${user.fullName} updated.`);
         } catch (err) {
+            console.error(err);
             toast.error("Error saving changes");
         } finally {
             setUpdatingId(null);
@@ -385,6 +393,7 @@ const ActionDisplaySettingsTab = () => {
             await userSettingService.updateSetting({ minActionDurationMinutes: minDuration });
             toast.success("Settings saved successfully.");
         } catch (err) {
+            console.error(err);
             toast.error("Error saving settings.");
         }
     };
@@ -432,6 +441,7 @@ const HashtagRulesTab = () => {
             const res = await hashtagRuleService.getAll();
             setRules(res.data);
         } catch (err) {
+            console.error(err);
             toast.error("Error fetching rules.");
         } finally {
             setLoading(false);
@@ -458,6 +468,7 @@ const HashtagRulesTab = () => {
             setNewTargetValue('');
             fetchRules();
         } catch (err) {
+            console.error(err);
             toast.error("Error adding rule.");
         }
     };
@@ -469,6 +480,7 @@ const HashtagRulesTab = () => {
                 toast.success("Rule deleted.");
                 fetchRules();
             } catch (err) {
+                console.error(err);
                 toast.error("Error deleting rule.");
             }
         }
@@ -556,6 +568,7 @@ const FeatureFlagsTab = () => {
             const res = await systemSettingsService.getAll();
             setFeatures(res.data);
         } catch (err) {
+            console.error(err);
             toast.error("Error fetching feature flags");
         } finally {
             setLoading(false);
@@ -572,6 +585,7 @@ const FeatureFlagsTab = () => {
             ));
             toast.success(`Feature ${!currentState ? 'enabled' : 'disabled'}.`);
         } catch (err) {
+            console.error(err);
             toast.error("Error toggling feature");
         }
     };
@@ -634,7 +648,7 @@ const Settings = () => {
                 <button onClick={() => setActiveTab('stepTemplates')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'stepTemplates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DatabaseIcon /> Project Steps</button>
                 <button onClick={() => setActiveTab('formTemplates')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'formTemplates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DatabaseIcon /> Forms & Processes</button>
                 <button onClick={() => setActiveTab('reportTemplates')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'reportTemplates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DatabaseIcon /> General Reports</button>
-                <button onClick={() => setActiveTab('groqAi')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'groqAi' ? 'border-indigo-600 text-indigo-600 font-extrabold bg-indigo-50/50 rounded-t-xl' : 'border-transparent text-indigo-500 font-semibold'}`}><SparklesIcon className="text-indigo-600" /> Groq AI Config</button>
+                <button onClick={() => setActiveTab('groqAi')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'groqAi' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><AiIcon /> AI Engine</button>
                 <button onClick={() => setActiveTab('actionDisplay')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'actionDisplay' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DisplayIcon /> CRM Display</button>
                 <button onClick={() => setActiveTab('hashtagRules')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'hashtagRules' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><RoleIcon /> Hashtags</button>
                 <button onClick={() => setActiveTab('display')} className={`px-4 py-3 font-bold text-xs flex items-center border-b-2 transition-all ${activeTab === 'display' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}><DisplayIcon /> Sound Settings</button>
