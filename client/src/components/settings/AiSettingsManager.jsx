@@ -17,6 +17,7 @@ const AiSettingsManager = () => {
     maxTokens: 4096,
     isEnabled: true
   });
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
@@ -39,6 +40,7 @@ const AiSettingsManager = () => {
           maxTokens: res.data.maxTokens ?? 4096,
           isEnabled: res.data.isEnabled ?? true
         });
+        setHasApiKey(res.data.hasApiKey ?? false);
       }
     } catch (err) {
       console.error(err);
@@ -50,7 +52,7 @@ const AiSettingsManager = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.apiKey.trim()) {
+    if (!hasApiKey && !formData.apiKey.trim()) {
       toast.error('Please enter a Groq API key.');
       return;
     }
@@ -59,6 +61,7 @@ const AiSettingsManager = () => {
       await aiService.updateSettings(formData);
       toast.success('AI settings saved successfully.');
       setTestResult(null);
+      await fetchSettings();
     } catch (err) {
       console.error(err);
       toast.error('Failed to save settings.');
@@ -68,7 +71,7 @@ const AiSettingsManager = () => {
   };
 
   const handleTestConnection = async () => {
-    if (!formData.apiKey.trim()) {
+    if (!hasApiKey && !formData.apiKey.trim()) {
       toast.error('Please enter an API key first.');
       return;
     }
@@ -96,12 +99,21 @@ const AiSettingsManager = () => {
 
   return (
     <div dir="ltr" className="max-w-xl text-xs">
-      <h2 className="text-base font-bold text-slate-800 mb-6">Groq AI Engine Configuration</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-base font-bold text-slate-800">Groq AI Engine Configuration</h2>
+        {hasApiKey && (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+            Key Configured ✓
+          </span>
+        )}
+      </div>
       
       <form onSubmit={handleSave} className="space-y-4">
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="font-bold text-slate-700">Groq API Key *</label>
+            <label className="font-bold text-slate-700">
+              Groq API Key {hasApiKey ? '(Configured)' : '*'}
+            </label>
             <button
               type="button"
               onClick={() => setShowKey(!showKey)}
@@ -114,10 +126,13 @@ const AiSettingsManager = () => {
             type={showKey ? 'text' : 'password'}
             value={formData.apiKey}
             onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-            placeholder="gsk_..."
+            placeholder={hasApiKey ? 'Enter new key to update...' : 'gsk_...'}
             className="flat-input w-full py-2 font-mono"
-            required
+            required={!hasApiKey}
           />
+          <p className="text-[10px] text-slate-400 mt-1 font-medium">
+            Leave as is to keep existing key, or paste a new key to update.
+          </p>
         </div>
 
         <div>
@@ -185,12 +200,12 @@ const AiSettingsManager = () => {
             disabled={saving}
             className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Saving...' : 'Save Configuration'}
           </button>
           <button
             type="button"
             onClick={handleTestConnection}
-            disabled={testing || !formData.apiKey.trim()}
+            disabled={testing || (!hasApiKey && !formData.apiKey.trim())}
             className="flex-1 flat-button py-2.5 rounded-xl font-bold disabled:opacity-50"
           >
             {testing ? 'Testing...' : 'Test Connection'}

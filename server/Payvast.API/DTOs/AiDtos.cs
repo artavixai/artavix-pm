@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace Payvast.API.DTOs
 {
     public class GroqSettingsDto
     {
         public string ApiKey { get; set; }
-        public string Model { get; set; } = "llama-3.3-70b-versatile";
+        public bool HasApiKey { get; set; }
+        public string Model { get; set; } = "openai/gpt-oss-120b";
         public double Temperature { get; set; } = 0.3;
         public int MaxTokens { get; set; } = 4096;
         public bool IsEnabled { get; set; } = true;
@@ -14,9 +14,8 @@ namespace Payvast.API.DTOs
 
     public class UpdateGroqSettingsDto
     {
-        [Required]
         public string ApiKey { get; set; }
-        public string Model { get; set; } = "llama-3.3-70b-versatile";
+        public string Model { get; set; } = "openai/gpt-oss-120b";
         public double Temperature { get; set; } = 0.3;
         public int MaxTokens { get; set; } = 4096;
         public bool IsEnabled { get; set; } = true;
