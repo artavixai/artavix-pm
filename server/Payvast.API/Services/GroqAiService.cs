@@ -49,8 +49,7 @@ namespace Payvast.API.Services
 
         public async Task SaveSettingsAsync(UpdateGroqSettingsDto dto)
         {
-            // Only update the API key if a new unmasked key was provided
-            if (!string.IsNullOrWhiteSpace(dto.ApiKey) && !dto.ApiKey.Contains("..."))
+            if (!string.IsNullOrWhiteSpace(dto.ApiKey))
             {
                 await UpsertSettingAsync("GroqApiKey", dto.ApiKey.Trim(), true);
             }
@@ -85,8 +84,7 @@ namespace Payvast.API.Services
         {
             string keyToUse = apiKey;
 
-            // If key contains mask or is empty, use the stored key
-            if (string.IsNullOrWhiteSpace(keyToUse) || keyToUse.Contains("..."))
+            if (string.IsNullOrWhiteSpace(keyToUse))
             {
                 var storedSettings = await GetSettingsAsync();
                 keyToUse = storedSettings.ApiKey;

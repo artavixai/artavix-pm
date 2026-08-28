@@ -32,10 +32,6 @@ namespace Payvast.API.Controllers
         public async System.Threading.Tasks.Task<ActionResult<GroqSettingsDto>> GetSettings()
         {
             var settings = await _aiService.GetSettingsAsync();
-            if (!string.IsNullOrEmpty(settings.ApiKey) && settings.ApiKey.Length > 8)
-            {
-                settings.ApiKey = settings.ApiKey.Substring(0, 4) + "..." + settings.ApiKey.Substring(settings.ApiKey.Length - 4);
-            }
             return Ok(settings);
         }
 
@@ -193,7 +189,7 @@ Ensure all textual fields are written in professional English only. Only output 
                     ProjectId = project.Id,
                     ProjectTitle = project.Title,
                     HealthScore = root.TryGetProperty("healthScore", out var hs) ? hs.GetInt32() : (100 - Math.Max(0, 100 - project.Progress)),
-                    StatusSummary = root.TryGetProperty("statusSummary", out var ss) ? ss.GetString() : "Project summary generated successfully.",
+                    StatusSummary = root.TryGetProperty("statusSummary", out var ss) ? ss.GetString() : "Executive project summary generated successfully.",
                     DetailedAnalysis = root.TryGetProperty("detailedAnalysis", out var da) ? da.GetString() : cleanedJson,
                     PredictedDeliveryRisk = root.TryGetProperty("predictedDeliveryRisk", out var pdr) ? pdr.GetString() : "Medium",
                     AnalyzedAt = DateTime.UtcNow

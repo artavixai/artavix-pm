@@ -25,6 +25,11 @@ const Header = () => {
     close();
   };
 
+  const getAvatarSrc = (url) => {
+    if (!url) return null;
+    return url.startsWith('http') ? url : `${SERVER_URL}/${url}`;
+  };
+
   return (
     <header className="flat-raised sticky top-0 z-30 px-8 py-3.5 mb-6 backdrop-blur-md bg-white/90">
       <div className="flex items-center justify-between">
@@ -36,9 +41,13 @@ const Header = () => {
               <div className="relative">
                 {user?.avatarUrl ? (
                   <img
-                    src={`${SERVER_URL}/${user.avatarUrl}`}
+                    src={getAvatarSrc(user.avatarUrl)}
                     alt={user.fullName}
                     className="w-10 h-10 rounded-full object-cover shadow-sm border border-slate-200"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || 'User')}&background=3b82f6&color=fff`;
+                    }}
                   />
                 ) : (
                   <div className="profile-img">{user?.fullName?.charAt(0).toUpperCase()}</div>
