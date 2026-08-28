@@ -44,7 +44,7 @@ namespace Payvast.API.Controllers
         public async System.Threading.Tasks.Task<IActionResult> UpdateSettings([FromBody] UpdateGroqSettingsDto dto)
         {
             await _aiService.SaveSettingsAsync(dto);
-            return Ok(new { message = "تنظیمات هوش مصنوعی با موفقیت ذخیره شد." });
+            return Ok(new { message = "AI settings saved successfully." });
         }
 
         [HttpPost("test-connection")]
@@ -76,7 +76,7 @@ namespace Payvast.API.Controllers
                 .FirstOrDefaultAsync(p => p.Id == projectId);
 
             if (project == null)
-                return NotFound(new { error = "پروژه یافت نشد." });
+                return NotFound(new { error = "Project not found." });
 
             var followUps = await _context.ProjectFollowUps
                 .Where(f => f.ProjectId == projectId)
@@ -152,7 +152,7 @@ namespace Payvast.API.Controllers
             };
 
             string systemPrompt = @"You are a Senior Enterprise Project Management AI Consultant (Artavix AI PM).
-Your task is to thoroughly analyze the provided project metrics and return a structured JSON response in Persian (Farsi).
+Your task is to thoroughly analyze the provided project metrics and return a structured JSON response.
 The JSON MUST follow this exact schema:
 {
   ""healthScore"": <Integer between 0 and 100 representing project health>,
@@ -162,9 +162,9 @@ The JSON MUST follow this exact schema:
   ""recommendedActions"": [""<Action 1 in Persian>"", ""<Action 2 in Persian>"", ...],
   ""predictedDeliveryRisk"": ""<Low | Medium | High | Critical>""
 }
-Only output the raw JSON object. Do not include markdown code block syntax if possible, or ensure it is clean JSON.";
+Only output the raw JSON object.";
 
-            string userPrompt = $"Analyze this project and generate the executive report in Persian:\n\n{JsonSerializer.Serialize(projectSummary, new JsonSerializerOptions { WriteIndented = true })}";
+            string userPrompt = $"Analyze this project and generate the executive report:\n\n{JsonSerializer.Serialize(projectSummary, new JsonSerializerOptions { WriteIndented = true })}";
 
             try
             {
@@ -193,7 +193,7 @@ Only output the raw JSON object. Do not include markdown code block syntax if po
                     ProjectId = project.Id,
                     ProjectTitle = project.Title,
                     HealthScore = root.TryGetProperty("healthScore", out var hs) ? hs.GetInt32() : (100 - Math.Max(0, 100 - project.Progress)),
-                    StatusSummary = root.TryGetProperty("statusSummary", out var ss) ? ss.GetString() : "خلاصه وضعیت پروژه تولید شد.",
+                    StatusSummary = root.TryGetProperty("statusSummary", out var ss) ? ss.GetString() : "Project summary generated.",
                     DetailedAnalysis = root.TryGetProperty("detailedAnalysis", out var da) ? da.GetString() : cleanedJson,
                     PredictedDeliveryRisk = root.TryGetProperty("predictedDeliveryRisk", out var pdr) ? pdr.GetString() : "Medium",
                     AnalyzedAt = DateTime.UtcNow
@@ -219,7 +219,7 @@ Only output the raw JSON object. Do not include markdown code block syntax if po
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"خطا در تحلیل هوش مصنوعی: {ex.Message}" });
+                return StatusCode(500, new { error = $"AI Analysis Error: {ex.Message}" });
             }
         }
     }

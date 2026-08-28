@@ -31,10 +31,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// Explicitly anchor SQLite database path to the project root directory
+var dbFilePath = Path.Combine(builder.Environment.ContentRootPath, "artavix.db");
+var connectionString = $"Data Source={dbFilePath}";
 
 Console.WriteLine("======================================================================");
-Console.WriteLine($"ARTAVIX PM DATABASE CONNECTION: {connectionString}");
+Console.WriteLine($"ARTAVIX PM PERSISTENT DATABASE PATH: {dbFilePath}");
 Console.WriteLine("======================================================================");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

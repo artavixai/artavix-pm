@@ -16,7 +16,7 @@ namespace Payvast.API.Services
         private readonly HttpClient _httpClient;
         private readonly ApplicationDbContext _context;
 
-        private const string DefaultModel = "llama-3.3-70b-versatile";
+        private const string DefaultModel = "openai/gpt-oss-120b";
         private const string GroqApiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
         public GroqAiService(HttpClient httpClient, ApplicationDbContext context)
@@ -75,14 +75,16 @@ namespace Payvast.API.Services
         public async System.Threading.Tasks.Task<string> TestConnectionAsync(string apiKey, string model)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
-                throw new Exception("کلید API گروک وارد نشده است.");
+                throw new Exception("Groq API Key has not been provided.");
+
+            var selectedModel = !string.IsNullOrWhiteSpace(model) ? model : DefaultModel;
 
             var requestBody = new
             {
-                model = !string.IsNullOrWhiteSpace(model) ? model : DefaultModel,
+                model = selectedModel,
                 messages = new[]
                 {
-                    new { role = "user", content = "Ping test. Please respond with 'OK'." }
+                    new { role = "user", content = "Ping test. Respond with OK." }
                 },
                 max_tokens = 10
             };
@@ -96,17 +98,17 @@ namespace Payvast.API.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"خطا در اتصال به Groq: {response.StatusCode} - {responseJson}");
+                throw new Exception($"Groq API Error: {response.StatusCode} - {responseJson}");
             }
 
-            return "اتصال به Groq API با موفقیت برقرار شد.";
+            return "Connection to Groq API successfully established.";
         }
 
         public async System.Threading.Tasks.Task<string> GenerateChatCompletionAsync(string systemPrompt, string userPrompt)
         {
             var settings = await GetSettingsAsync();
             if (string.IsNullOrWhiteSpace(settings.ApiKey))
-                throw new Exception("کلید Groq API در تنظیمات سیستم ثبت نشده است. لطفاً ابتدا در بخش تنظیمات ادمین کلید را ثبت نمایید.");
+                throw new Exception("Groq API Key is not configured. Please enter the API key in System Settings.");
 
             var requestBody = new
             {
@@ -129,7 +131,7 @@ namespace Payvast.API.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"خطا در فراخوانی Groq API: {response.StatusCode} - {responseJson}");
+                throw new Exception($"Groq API Error: {response.StatusCode} - {responseJson}");
             }
 
             using var doc = JsonDocument.Parse(responseJson);
